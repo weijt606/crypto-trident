@@ -169,7 +169,7 @@
   .note b { color:var(--text); }
 
   /* strategy cards */
-  .strategy-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+  .strategy-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
   .strat-card { background:var(--bg); border:1px solid var(--line); border-radius:var(--r-sm); padding:12px 14px; }
   .strat-card .hd { display:flex; align-items:center; gap:8px; }
   .strat-card .hd .nm { font-weight:600; color:var(--bright); white-space:nowrap; }
@@ -188,6 +188,7 @@
   .footer { margin-top:28px; color:var(--muted); font-size:11.5px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 
   @media (max-width:1100px) {
+    .strat-split { grid-template-columns:1fr; }
     .kpis { grid-template-columns:repeat(3,1fr); }
     .kpi:nth-child(4) { border-left:none; }
     .kpi:nth-child(n+4) { border-top:1px solid var(--line); }
@@ -214,5 +215,8 @@
   #sentChart { height:110px; }
   .sub-h.mt0 { margin-top:0; }
   #factorsBox { max-width:720px; }
+  /* Strategy & risk panel: limits on the left, strategy cards on the right */
+  .strat-split { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px; align-items:start; }
+  .strat-split #factorsBox { max-width:none; }
   a.inherit { color:inherit; }
   [hidden] { display:none !important; }

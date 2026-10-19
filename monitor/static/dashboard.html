@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TRIDENT Dashboard</title>
+<title>crypto-trident Dashboard</title>
 <script src="/static/echarts.min.js"></script>
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><i></i><span>TRIDENT</span></div>
+  <div class="brand"><i></i><span>CRYPTO-TRIDENT</span></div>
   <div class="views">
     <button class="live" id="tabLive">Live<span class="cnt" id="tabLiveCount"></span></button>
     <button class="paper" id="tabPaper">Paper<span class="cnt" id="tabPaperCount"></span></button>
@@ -107,10 +107,16 @@
   </div>
 
   <div class="pane" id="p-strategy">
-    <div class="sub-h mt0">Global limits (every order is checked against these)</div>
-    <div id="factorsBox"></div>
-    <div class="sub-h">Strategies (logic and latest internal state)</div>
-    <div class="strategy-cards" id="strategyCards"></div>
+    <div class="strat-split">
+      <div>
+        <div class="sub-h mt0">Global limits (every order is checked against these)</div>
+        <div id="factorsBox"></div>
+      </div>
+      <div>
+        <div class="sub-h mt0">Strategies (logic and latest internal state)</div>
+        <div class="strategy-cards" id="strategyCards"></div>
+      </div>
+    </div>
   </div>
 </div>
 

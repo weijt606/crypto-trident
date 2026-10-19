@@ -728,7 +728,7 @@ def api_strategy(_q) -> dict:
             "Max position / equity": pct("max_position_pct"),
             "Daily loss limit": f'{pct("daily_loss_pct")} -> no new entries today',
             "Max drawdown": f'{pct("max_drawdown_pct")} -> flatten and halt',
-            "Order rate": f'{risk.get("max_orders_per_minute", "n/a")}/min',
+            "Order rate": f'{risk.get("max_orders_per_minute", "n/a")} per bar',
         },
         "universe": risk.get("allowed_symbols", []),
         "fees": f'taker {fees.get("taker_bps", 0) / 100}% + slippage '
