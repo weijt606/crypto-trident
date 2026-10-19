@@ -150,8 +150,9 @@ to a new file, set `strategy:` and `params:`, and run it with `--bot <file name>
 
 ## Going live (read this first)
 
-1. Paper trade long enough to trust the behavior, and review an out-of-sample backtest. This is
-   a minimum engineering check, not evidence of future profitability.
+1. Paper trade long enough to trust the behavior, review an out-of-sample backtest, and run the
+   circuit-breaker drill (`uv run pytest tests/test_live_drill.py`). This is a minimum engineering
+   check, not evidence of future profitability.
 2. Create a **dedicated** Binance API key: reading + trading only, **withdrawals disabled**,
    **IP whitelist** on, ideally in a sub-account holding only capital you can afford to lose.
 3. Put keys in `.env` (copy `.env.example`, `chmod 600 .env`). Use a separate read-only key for

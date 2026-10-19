@@ -11,5 +11,5 @@ under the Apache License, Version 2.0, which carries the following NOTICE:
     The Apache Software Foundation (https://www.apache.org/).
 
 ECharts includes portions of d3 (Copyright 2010-2016 Mike Bostock, BSD-3-Clause).
-ECharts also bundles ZRender (Copyright (c) 2013, 2017 Baidu Inc., BSD-3-Clause).
+ECharts also bundles ZRender (Copyright (c) 2017, Baidu Inc., BSD-3-Clause).
 See monitor/static/ECHARTS_LICENSE for the full license texts.

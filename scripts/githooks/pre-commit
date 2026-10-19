@@ -26,7 +26,7 @@ blocked=$(printf '%s\n' "$staged" | grep "$(printf '\001')" | tr '\001' '?')
 #    files, or key/certificate stores.
 blocked=$(printf '%s\n' "$staged" | grep -E '(^|/)(\.env(\..+)?|[^/]+\.env|\.envrc)$' | grep -vE '(^|/)\.env\.example$')
 [ -n "$blocked" ] && fail "refusing to commit environment files:" "$blocked"
-blocked=$(printf '%s\n' "$staged" | grep -iE '\.(pem|key|p12|pfx)$')
+blocked=$(printf '%s\n' "$staged" | grep -iE '\.(pem|key|p12|pfx)$|(^|/)id_(rsa|dsa|ecdsa|ed25519)$')
 [ -n "$blocked" ] && fail "refusing to commit key/certificate files:" "$blocked"
 
 # 1b) Never commit local runtime data: ledgers, market data, logs, executor
