@@ -1,0 +1,47 @@
+# Secrets - never commit
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.envrc
+
+# Local data: market data, ledgers, state, logs
+storage/
+logs/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.db
+*.parquet
+# Executor state and halt markers (normally under storage/, ignored anywhere)
+*_state.json
+*.kill
+*.softcut
+*.lock
+!uv.lock
+
+# Local bot configs you don't want to share (convention: *.local.yaml)
+config/*.local.yaml
+config/bots/*.local.yaml
+**/*.local.yaml
+# Local record of deposits/withdrawals (personal financial data)
+config/capital_events.yaml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+.ruff_cache/
+.mypy_cache/

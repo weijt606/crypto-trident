@@ -1,0 +1,25 @@
+[project]
+name = "crypto-trident"
+version = "0.1.0"
+description = "Crypto quant trading framework — one strategy codebase for backtest, paper and live trading"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.12"
+dependencies = [
+    "ccxt>=4.5",
+    "pandas>=3.0",
+    "pyarrow>=24.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.2",
+    "tabulate>=0.10",   # pandas DataFrame.to_markdown
+    "scipy>=1.17",      # pandas spearman correlation
+    "defusedxml>=0.7",  # safe RSS/Atom parsing (sentiment)
+]
+
+[dependency-groups]
+dev = ["pytest>=9.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

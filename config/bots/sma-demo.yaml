@@ -1,0 +1,17 @@
+# Example bot: classic 50/200 moving-average crossover ("golden cross").
+# Copy this file to create a new bot; the file name is what you pass to --bot.
+
+name: sma-demo          # unique bot id, used in logs, the trade journal and the dashboard
+strategy: sma_cross     # key in strategies.STRATEGIES
+symbol: BTC/USDT        # must be in risk.allowed_symbols (config/system.yaml)
+timeframe: 1h           # bar period: 1m / 5m / 15m / 1h / 4h / 1d
+market: spot            # spot (default) or perp (USDT-margined perpetual)
+stage: paper            # research / paper / live / retired; live must be set by a human operator
+
+# Optional (perp live executor only; otherwise system.yaml live.cash_cap is used):
+# cash_cap: 100         # max capital this bot may use -- set your own
+
+params:
+  fast: 50              # fast SMA period (bars)
+  slow: 200             # slow SMA period (bars); must be > fast
+  alloc: 0.5            # fraction of equity to deploy on a buy signal

@@ -1,0 +1,47 @@
+# Global configuration. Contains no secrets (those live in .env).
+exchange: binance
+storage_dir: storage
+
+fees:
+  taker_bps: 10        # spot taker 0.1% (without BNB discount)
+  perp_taker_bps: 5    # USDT-margined perpetual taker 0.05%
+slippage_bps: 5        # assumed market-order slippage 0.05%
+
+# Risk overlay for perp strategies (spot strategies are unaffected:
+# allow_short is always False and leverage is always 1).
+risk_perp:
+  max_leverage: 3      # code also enforces a hard cap of min(x, 3)
+
+# Keep initial_cash consistent with risk.max_order_notional below: an all-in
+# signal larger than the per-order cap is rejected by the risk guard.
+backtest:
+  initial_cash: 1000
+paper:
+  initial_cash: 1000
+
+live:
+  # Used by the spot live executor; the perp executor uses these only when the
+  # bot yaml has no cash_cap of its own.
+  initial_cash: 100   # equity baseline for drawdown checks -- set your own
+  cash_cap: 100       # executor clamps visible quote balance to this -- set your own.
+                      # Keep it equal to initial_cash: drawdown is measured against
+                      # initial_cash, so a baseline above the funds actually
+                      # available reads as an immediate drawdown.
+
+dashboard:
+  port: 8777
+
+# Hard risk limits, shared by backtest, paper and live. Think before changing.
+risk:
+  # Symbol whitelist: orders outside this list are always rejected.
+  allowed_symbols:
+    - BTC/USDT
+    - ETH/USDT
+    - SOL/USDT
+    - BNB/USDT
+  max_order_notional: 1000   # max notional per order (USDT) -- set it near your capital
+  max_position_pct: 0.95     # max position as a fraction of equity (lower it when running several bots)
+  daily_loss_pct: 0.03       # 3% daily loss -> no new positions for the rest of the UTC day
+  max_drawdown_pct: 0.15     # 15% drawdown from peak -> flatten and stop; needs manual revive
+  max_orders_per_minute: 10  # per 60 s of bar time = max orders per bar for 1m+ bars
+  min_order_notional: 10     # skip dust orders to limit fee drag (exchange minimum is ~5 USDT)

@@ -1,0 +1,69 @@
+#!/bin/sh
+# Pre-commit secret scanner: keeps credentials out of git history.
+# Enable with: git config core.hooksPath scripts/githooks
+# Bypass (only for a confirmed false positive): git commit --no-verify
+# If gitleaks is installed it runs as well (gitleaks protect --staged).
+
+# Staged paths (deletions excluded), one per line. Read NUL-delimited (-z) so names
+# with tabs, quotes or non-ASCII characters are not C-quoted by git (which would break
+# the anchored patterns below); an embedded newline becomes \001 so every path stays
+# on exactly one line.
+staged=$(git diff --cached --name-only -z --diff-filter=d | tr '\n\000' '\001\n')
+added=$(git diff --cached -U0 | grep -E '^\+' | grep -vE '^\+\+\+')
+
+fail() {
+    printf '%s\n' "[pre-commit] $1"
+    [ -n "$2" ] && printf '%s\n' "$2" | head -5
+    printf '%s\n' "If this is a false positive, commit with --no-verify."
+    exit 1
+}
+
+# 0) Paths with embedded newlines could slip past line-based checks: refuse them.
+blocked=$(printf '%s\n' "$staged" | grep "$(printf '\001')" | tr '\001' '?')
+[ -n "$blocked" ] && fail "refusing to commit paths containing newlines:" "$blocked"
+
+# 1) Never commit .env files or their variants (.env.example is allowed), direnv
+#    files, or key/certificate stores.
+blocked=$(printf '%s\n' "$staged" | grep -E '(^|/)(\.env(\..+)?|[^/]+\.env|\.envrc)$' | grep -vE '(^|/)\.env\.example$')
+[ -n "$blocked" ] && fail "refusing to commit environment files:" "$blocked"
+blocked=$(printf '%s\n' "$staged" | grep -iE '\.(pem|key|p12|pfx)$')
+[ -n "$blocked" ] && fail "refusing to commit key/certificate files:" "$blocked"
+
+# 1b) Never commit local runtime data: ledgers, market data, logs, executor
+#     state, halt markers or the personal capital-events ledger.
+blocked=$(printf '%s\n' "$staged" | grep -E \
+    '(^|/)(storage|logs)/|(^|/)config/capital_events\.yaml$|_state\.json$|\.(kill|softcut|parquet|db)$|\.sqlite[^/]*$')
+[ -n "$blocked" ] && fail "refusing to commit local runtime data (ledgers/state/logs):" "$blocked"
+
+# 2) Private key material.
+hits=$(printf '%s\n' "$added" | grep -nE -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----')
+[ -n "$hits" ] && fail "private key block detected:" "$hits"
+
+# 3) Well-known token formats (AWS access key ids, GitHub, Slack, Telegram bot tokens).
+hits=$(printf '%s\n' "$added" | grep -nE '(AKIA|ASIA)[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}|xox[abprs]-[A-Za-z0-9-]{10,}|[0-9]{8,10}:[A-Za-z0-9_-]{35}')
+[ -n "$hits" ] && fail "known token format detected:" "$hits"
+
+# 4) Generic assignments: key/secret/token/password set to a long literal (>= 20 chars).
+hits=$(printf '%s\n' "$added" | \
+    grep -inE '(api[_-]?key|secret|token|passwd|password)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9/+=_-]{20,}')
+[ -n "$hits" ] && fail "possible secret assignment detected:" "$hits"
+
+# 5) Bare 64-char alphanumeric strings with mixed case and digits (the shape of a
+#    Binance API key/secret). Lowercase hex digests such as sha256 hashes are ignored.
+hits=$(printf '%s\n' "$added" | grep -oE '[A-Za-z0-9]+' | awk 'length($0) == 64' | \
+    grep '[A-Z]' | grep '[a-z]' | grep '[0-9]' | sed -E 's/^(.{6}).*/\1... (64 chars)/')
+[ -n "$hits" ] && fail "possible API key/secret (64-char token) in added lines:" "$hits"
+
+# 6) Public IPv4 addresses (e.g. API whitelist IPs). Private, loopback and broadcast
+#    ranges and the documentation ranges (RFC 5737) are allowed. Mask real addresses as a.b.x.x.
+ips=$(printf '%s\n' "$added" | \
+    grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | \
+    grep -vE '^(127\.|0\.0\.0\.0|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|255\.)' | sort -u)
+[ -n "$ips" ] && fail "public IP address in added lines (mask it, or confirm it is e.g. a version number):" "$ips"
+
+# 7) gitleaks, when available, as an additional scanner.
+if command -v gitleaks >/dev/null 2>&1; then
+    gitleaks protect --staged --redact --no-banner || fail "gitleaks reported a potential secret."
+fi
+
+exit 0

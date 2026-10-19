@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRIDENT Dashboard</title>
+<script src="/static/echarts.min.js"></script>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><i></i><span>TRIDENT</span></div>
+  <div class="views">
+    <button class="live" id="tabLive">Live<span class="cnt" id="tabLiveCount"></span></button>
+    <button class="paper" id="tabPaper">Paper<span class="cnt" id="tabPaperCount"></span></button>
+  </div>
+  <div class="top-r">
+    <span class="pill" id="statusPill"></span>
+    <span id="updatedAt"></span>
+  </div>
+</header>
+
+<!-- Attention: only issues that are still unresolved right now, plus recent critical alerts -->
+<div class="attn" id="attn"></div>
+
+<!-- Live view: KPI strip -->
+<div class="kpis live-only" id="kpis">
+  <div class="kpi hero"><div class="k">Live equity</div><div class="v" id="kEq">—</div><div class="s" id="kEqS"></div></div>
+  <div class="kpi"><div class="k">Today</div><div class="v" id="kDay">—</div><div class="s">vs. previous daily close</div></div>
+  <div class="kpi"><div class="k">Last 7 days</div><div class="v" id="kWeek">—</div><div class="s">capital moves excluded</div></div>
+  <div class="kpi"><div class="k">Max drawdown</div><div class="v" id="kDd">—</div><div class="s" id="kDdS"></div></div>
+  <div class="kpi"><div class="k">Exposure</div><div class="v" id="kNot">—</div><div class="s" id="kNotS"></div></div>
+  <div class="kpi"><div class="k">Realized PnL</div><div class="v" id="kReal">—</div><div class="s" id="kRealS"></div></div>
+</div>
+
+<div class="chips" id="botChips"></div>
+
+<div class="main">
+  <div class="card minw0">
+    <div class="card-h">
+      <div class="seg" id="chartSeg">
+        <button data-c="equity">Equity</button>
+        <button data-c="pnl">Daily PnL</button>
+      </div>
+      <span class="meta" id="chartMeta"></span>
+    </div>
+    <div id="equityChart" class="chart"></div>
+    <div id="dailyPnlChart" class="chart" hidden></div>
+    <div class="chart-sub" id="chartSub"></div>
+  </div>
+  <div class="side">
+    <div class="card" id="botInfo"></div>
+  </div>
+</div>
+
+<!-- Tabbed panels -->
+<div class="card">
+  <div class="ptabs" id="ptabs">
+    <button data-p="fills">Fills</button>
+    <button data-p="events">Events</button>
+    <button data-p="alerts">Alerts<span class="c" id="alCount"></span></button>
+    <button data-p="market">Market</button>
+    <button data-p="sent" id="tabSent">Sentiment</button>
+    <button data-p="strategy">Strategy &amp; risk</button>
+  </div>
+
+  <div class="pane" id="p-fills">
+    <div class="pane-tools"><select id="fillFilter"></select><span class="meta">Recent fills, newest first</span></div>
+    <div class="tbl"><table id="fillsTable"><thead><tr>
+      <th>Time</th><th class="t">Bot</th><th class="t">Symbol</th><th class="t">Side</th><th>Qty</th><th>Price</th><th>Fee</th><th>Realized PnL</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="pane" id="p-events">
+    <div class="pane-tools"><span class="meta">Risk and system events, newest first</span></div>
+    <div class="tbl"><table id="eventsTable"><thead><tr>
+      <th>Time</th><th class="t">Bot</th><th class="t">Kind</th><th class="t">Detail</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="pane" id="p-alerts">
+    <div class="pane-tools"><span class="meta">Alert feed, identical messages merged with a count</span></div>
+    <div class="tbl" id="alertsBox"></div>
+  </div>
+
+  <div class="pane" id="p-market">
+    <div class="tickers" id="marketCards"></div>
+    <div class="pane-tools"><div class="tb" id="symbolBar"></div><div class="tb" id="tfBar"></div><span class="meta" id="klineMeta"></span></div>
+    <div id="klineChart"></div>
+  </div>
+
+  <div class="pane" id="p-sent">
+    <div id="sentEmpty" class="empty" hidden>No sentiment data yet. Run <b>scripts/fetch_sentiment.py</b> to build the composite.</div>
+    <div id="sentBody">
+      <div class="sent">
+        <div>
+          <div class="muted fs-sm">Composite sentiment (−100 fear to +100 greed)</div>
+          <div id="sentScore">—</div>
+          <div class="muted sent-meta" id="sentMeta"></div>
+        </div>
+        <div id="sentChart"></div>
+      </div>
+      <div class="sub-h">Source weights and current contribution (z-score)</div>
+      <div id="sentSources"></div>
+      <div class="note" id="sentNote"></div>
+    </div>
+  </div>
+
+  <div class="pane" id="p-strategy">
+    <div class="sub-h mt0">Global limits (every order is checked against these)</div>
+    <div id="factorsBox"></div>
+    <div class="sub-h">Strategies (logic and latest internal state)</div>
+    <div class="strategy-cards" id="strategyCards"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Research / personal project · not investment advice · crypto trading can lose all capital · no warranty</span>
+  <span>Charts: Apache ECharts (<a href="/static/ECHARTS_LICENSE" class="inherit">license</a>)</span>
+  <span class="live-only">Live view · real funds</span><span class="paper-only">Paper view · simulated, no real funds</span>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
