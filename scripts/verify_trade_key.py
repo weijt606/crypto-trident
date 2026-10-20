@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import ccxt
 
 from core.config import trade_keys
-from execution.common import redact
+from execution.common import permission_value, redact
 
 
 def main() -> int:
@@ -30,8 +30,8 @@ def main() -> int:
 
     try:
         key, secret = trade_keys()
-    except RuntimeError:
-        print("[FAIL] BINANCE_TRADE_API_KEY / BINANCE_TRADE_API_SECRET are empty in .env")
+    except RuntimeError as e:
+        print(f"[FAIL] {redact(e)}")
         return 1
 
     ex = ccxt.binance({"apiKey": key, "secret": secret, "enableRateLimit": True})
@@ -44,7 +44,7 @@ def main() -> int:
         return 1
 
     def b(field: str) -> bool:
-        return str(r.get(field)).lower() == "true"
+        return permission_value(r, field)
 
     # (field, required value, label). Futures permission is handled separately below:
     # it is required for perp bots and does not break fund isolation by itself.
@@ -63,7 +63,7 @@ def main() -> int:
         got = b(field)
         mark = "[OK]  " if got == want else "[FAIL]"
         ok = ok and got == want
-        state = "on" if got else "off"
+        state = "unknown" if got is None else ("on" if got else "off")
         print(f"{mark} {label}: {state}"
               + ("" if got == want else f" (must be {'on' if want else 'off'}; change it in API management)"))
 
@@ -109,6 +109,9 @@ def _main_redacted() -> int:
         return main()
     except ccxt.BaseError as e:
         print(f"[FAIL] exchange error ({type(e).__name__}): {redact(e)}")
+        return 1
+    except Exception as e:
+        print(f"[FAIL] self-check error ({type(e).__name__}): {redact(e)}")
         return 1
 
 

@@ -22,6 +22,11 @@ CONFIG_DIR = PROJECT_ROOT / "config"
 ENV_FILE = PROJECT_ROOT / ".env"
 
 _perm_warned = False
+_redaction_values: set[str] = set()
+_CREDENTIAL_NAMES = frozenset({
+    "BINANCE_READ_API_KEY", "BINANCE_READ_API_SECRET", "BINANCE_TRADE_API_KEY",
+    "BINANCE_TRADE_API_SECRET", "TELEGRAM_BOT_TOKEN",
+})
 
 
 def _dotenv() -> dict[str, str | None]:
@@ -43,9 +48,10 @@ def env(name: str, default: str | None = None) -> str | None:
     """Look up a setting: process environment first, then .env, then default.
     Empty values count as unset."""
     val = os.environ.get(name)
-    if val:
-        return val
-    val = _dotenv().get(name)
+    if not val:
+        val = _dotenv().get(name)
+    if name in _CREDENTIAL_NAMES and val and len(val) >= 8:
+        _redaction_values.add(val)
     return val if val else default
 
 
@@ -60,7 +66,7 @@ BOT_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 def validate_bot_name(name: str) -> str:
     """Bot names become file names (state, lock, kill markers) and client order ids:
     only [A-Za-z0-9_.-] is allowed, and never a bare '.' or '..'."""
-    if not isinstance(name, str) or not BOT_NAME_RE.match(name) or name in (".", ".."):
+    if not isinstance(name, str) or not BOT_NAME_RE.fullmatch(name) or name in (".", ".."):
         raise ValueError(f"invalid bot name {name!r}: use only letters, digits, '_', '.', '-'")
     return name
 
@@ -108,7 +114,18 @@ def trade_keys() -> tuple[str, str]:
     executors (execution/live.py, execution/live_perp.py) and the read-only key
     self-check (scripts/verify_trade_key.py) may call this. No other module
     should import it."""
+    if os.name == "posix" and ENV_FILE.exists():
+        if ENV_FILE.stat().st_mode & (stat.S_IRWXG | stat.S_IRWXO):
+            raise RuntimeError("Refusing trade credentials: .env permissions must be 600")
     key, secret = env("BINANCE_TRADE_API_KEY"), env("BINANCE_TRADE_API_SECRET")
     if not key or not secret:
         raise RuntimeError("BINANCE_TRADE_API_KEY/SECRET not set (see .env.example)")
     return key, secret
+
+
+def credential_values() -> set[str]:
+    """Only credentials already loaded by their owner; logging must not load trade keys.
+
+    Retain earlier values after rotation so buffered exceptions cannot expose old keys.
+    """
+    return set(_redaction_values)

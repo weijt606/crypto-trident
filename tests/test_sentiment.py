@@ -26,6 +26,8 @@ def default_config(monkeypatch):
 @pytest.fixture()
 def reddit_enabled(monkeypatch):
     monkeypatch.setattr(sources_mod, "load_config", lambda: ALL_SOURCES)
+    monkeypatch.setenv("TRIDENT_REDDIT_ACCESS_APPROVED", "true")
+    monkeypatch.setenv("TRIDENT_USER_AGENT", "trident-test/0.1")
 
 
 # ---- lexicon ----
@@ -311,7 +313,8 @@ def test_response_size_is_capped():
 
 
 def test_reddit_warns_without_user_agent(monkeypatch, reddit_enabled, caplog):
-    monkeypatch.setattr(sources_mod, "env", lambda k, d=None: None)
+    monkeypatch.setattr(sources_mod, "env", lambda k, d=None:
+                        "true" if k == "TRIDENT_REDDIT_ACCESS_APPROVED" else None)
     monkeypatch.setattr(sources_mod, "_reddit_get", lambda url, retry_wait=15.0: _ATOM_SAMPLE)
     import logging
     sources_mod.log.addHandler(caplog.handler)

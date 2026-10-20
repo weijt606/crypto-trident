@@ -68,6 +68,9 @@ def send_alert(text: str) -> bool:
 
     Telegram is enabled only when TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set
     in the environment or .env. Returns True only if the push was actually delivered."""
+    from execution.common import redact
+
+    text = redact(text)
     _persist(text, _level(text))
     token = env("TELEGRAM_BOT_TOKEN")
     chat_id = env("TELEGRAM_CHAT_ID")

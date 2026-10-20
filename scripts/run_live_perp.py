@@ -18,7 +18,7 @@ import sys
 from core.config import load_bot_config, load_system_config
 from execution.halt import TraderHalted, exit_on_halt
 from execution.live import (MAX_DRAWDOWN_CEILING, clamp_drawdown,  # noqa: F401  re-exported
-                            require_positive)
+                            require_live_exchange, require_positive)
 from execution.live_perp import HARD_MAX_LEVERAGE, LivePerpTrader
 from safety.guard import RiskConfig
 from strategies import build_strategy
@@ -26,6 +26,7 @@ from strategies import build_strategy
 
 def build_perp_trader(sys_cfg: dict, bot_cfg: dict, dry_run: bool = False) -> LivePerpTrader:
     """Build the perp executor from system + bot config (shared with retire_live_perp.py)."""
+    require_live_exchange(sys_cfg.get("exchange", "binance"))
     name = bot_cfg.get("name", "perp bot")
     overlay = sys_cfg.get("risk_perp") or {}
     # Numeric config must be finite and > 0, otherwise TraderHalted (exit 78).

@@ -33,6 +33,8 @@ class FakeExchange:
     # --- interface used by LiveTrader ---
     def sapi_get_account_apirestrictions(self):
         return {"enableWithdrawals": "false", "permitsUniversalTransfer": "false",
+                "enableInternalTransfer": False, "enableMargin": False,
+                "enableVanillaOptions": False, "enableReading": True,
                 "ipRestrict": "true", "enableSpotAndMarginTrading": "true"}
 
     def load_markets(self):

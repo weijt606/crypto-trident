@@ -27,6 +27,8 @@ class FakeFut:
 
     def sapi_get_account_apirestrictions(self):
         return {"enableWithdrawals": "false", "permitsUniversalTransfer": "false",
+                "enableInternalTransfer": False, "enableMargin": False,
+                "enableVanillaOptions": False, "enableReading": True, "ipRestrict": True,
                 "enableFutures": "true"}
 
     def fapiPrivateGetPositionSideDual(self):  # noqa: N802

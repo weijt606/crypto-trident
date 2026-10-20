@@ -4,7 +4,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
-[![Exchange: Binance via ccxt](https://img.shields.io/badge/exchange-Binance%20%28ccxt%29-informational.svg)](https://github.com/ccxt/ccxt)
+[![Exchange connectivity: CCXT](https://img.shields.io/badge/exchange%20connectivity-CCXT-informational.svg)](docs/EXCHANGE_INTEGRATION.md)
 [![Not investment advice](https://img.shields.io/badge/not-investment%20advice-red.svg)](DISCLAIMER.md)
 
 **One strategy codebase, three environments: backtest, paper, live.**
@@ -22,8 +22,16 @@ Repository and package name: `crypto-trident`.
 Trident is a small, opinionated crypto quant trading framework in Python. A strategy is a plain
 class that consumes closed bars and emits signals. The same class runs unchanged in the
 event-driven backtester, in a paper trader fed by live market data, and in live executors for
-Binance spot and USDT-margined perpetuals. Every order, in every environment, passes through
-the same independent risk guard.
+the currently implemented exchange adapter: Binance spot and USDT-margined perpetuals.
+Strategy orders pass through the independent risk guard; emergency exposure-reducing flatten
+paths are documented exceptions.
+
+Public market data uses CCXT. Live exchange support requires a dedicated, verified adapter;
+changing `exchange:` does not make a new venue safe for live trading. Dashboard tickers and
+exchange-specific sentiment feeds currently use Binance. See the
+[exchange integration design](docs/EXCHANGE_INTEGRATION.md),
+[compliance and data flows](docs/COMPLIANCE.md), and
+[release readiness record](docs/RELEASE_READINESS.md).
 
 > **Disclaimer.** Trident is infrastructure, not a trading strategy. It ships one textbook
 > example (a 50/200 SMA crossover) to demonstrate the API; it is **not** expected to be
@@ -164,7 +172,16 @@ to a new file, set `strategy:` and `params:`, and run it with `--bot <file name>
 6. `uv run python scripts/run_live.py --bot <name>` (spot) or `uv run python scripts/run_live_perp.py --bot <name>` (perp).
 7. If the kill switch fires, investigate, then `uv run python scripts/revive.py --bot <name> --reviewed "..."`.
 
-Run only **one** live executor per bot at any time.
+Run only **one** live executor per bot at any time, on **Linux or macOS**; live execution
+refuses to start without POSIX file locking. Use a dedicated account/sub-account and do not
+run several bots against the same account and symbol. Missing or malformed key-permission
+fields, a missing IP whitelist, or a group/world-accessible `.env` refuse live startup.
+Run manually with `umask 077` to keep newly created runtime data private.
+
+**Risk checks run on new closed bars, not continuously.** A configured 15% drawdown threshold
+is not a maximum-loss guarantee. Intrabar moves, gaps, stale data, API outages and inability
+to close a position can cause larger losses. No exchange-hosted protective stop is installed.
+Read [COMPLIANCE.md](docs/COMPLIANCE.md) before using the live adapter.
 
 ## Sentiment configuration
 
@@ -190,13 +207,20 @@ Each data source has its own terms. You are responsible for complying with them.
   subject to the exchange's API terms and rate limits.
 - **Reddit** (opt-in): uses Reddit's public, unauthenticated RSS/JSON endpoints. Reddit's User
   Agreement, Data API Terms and Responsible Builder Policy apply, and Reddit may block or
-  disallow unauthenticated automated access; enabling this source is at your own discretion.
+  disallow unauthenticated automated access. Obtain any required registration and permission
+  before enabling this source; low request rates do not establish authorization. Set
+  `TRIDENT_REDDIT_ACCESS_APPROVED=true` only after that review. This is your acknowledgement,
+  not an authorization granted by this project.
   Set `TRIDENT_USER_AGENT` in `.env` to a descriptive value with contact info, e.g.
   `trident/0.1 (by u/yourname; you@example.com)`, and keep request rates low (hourly at most).
+  Without the acknowledgement and a descriptive User-Agent, the fetcher makes no requests.
 - **News RSS feeds** (opt-in): intended for personal use. Do not redistribute stored headlines
   (`storage/sentiment/news.parquet`).
 - **api.ipify.org**: called only after an exchange authentication failure, to report your
   outbound IP so you can whitelist it.
+- **Telegram** (optional): when configured, sends alert text to Telegram and the selected
+  chat. Alerts may include bot names, symbols, quantities, prices, capital and risk events.
+  Leave both Telegram settings empty to keep alerts local. Review logs before sharing them.
 
 ## Configuration notes
 

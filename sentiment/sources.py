@@ -206,10 +206,16 @@ def fetch_reddit(subreddit: str = "CryptoCurrency", limit: int = 75,
     Opt-in: returns an empty frame unless "reddit" is in sentiment.sources."""
     if not _enabled("reddit", cfg):
         return pd.DataFrame(columns=_REDDIT_COLS)
+    if env("TRIDENT_REDDIT_ACCESS_APPROVED") != "true":
+        log.warning("Reddit fetch skipped: obtain the required access approval first, then set "
+                    "TRIDENT_REDDIT_ACCESS_APPROVED=true. This setting is an operator "
+                    "acknowledgement, not proof of permission.")
+        return pd.DataFrame(columns=_REDDIT_COLS)
     if not env("TRIDENT_USER_AGENT"):
         log.warning("Reddit source enabled but TRIDENT_USER_AGENT is unset; Reddit requires a "
                     "descriptive User-Agent with contact info, e.g. "
                     "\"trident/0.1 (by u/yourname; you@example.com)\"")
+        return pd.DataFrame(columns=_REDDIT_COLS)
     errors = []
     for name, fn in (("RSS", lambda: _reddit_rss(subreddit)), ("JSON", lambda: _reddit_json(subreddit, limit))):
         try:

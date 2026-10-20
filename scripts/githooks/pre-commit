@@ -13,7 +13,8 @@ added=$(git diff --cached -U0 | grep -E '^\+' | grep -vE '^\+\+\+')
 
 fail() {
     printf '%s\n' "[pre-commit] $1"
-    [ -n "$2" ] && printf '%s\n' "$2" | head -5
+    # Matches may contain a real credential. Never echo them, even on failure.
+    printf '%s\n' "Matched content withheld; inspect the staged diff locally."
     printf '%s\n' "If this is a false positive, commit with --no-verify."
     exit 1
 }

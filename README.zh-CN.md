@@ -4,7 +4,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
-[![Exchange: Binance via ccxt](https://img.shields.io/badge/exchange-Binance%20%28ccxt%29-informational.svg)](https://github.com/ccxt/ccxt)
+[![Exchange connectivity: CCXT](https://img.shields.io/badge/exchange%20connectivity-CCXT-informational.svg)](docs/EXCHANGE_INTEGRATION.md)
 [![Not investment advice](https://img.shields.io/badge/not-investment%20advice-red.svg)](DISCLAIMER.md)
 
 **一套策略代码，三种环境：回测、模拟盘、实盘。**
@@ -21,8 +21,13 @@
 
 Trident 是一个小而有明确取舍的 Python 加密货币量化交易框架。策略就是一个普通的类：读入已收盘的
 K 线，输出信号。同一个类无需任何改动，即可运行在事件驱动的回测器中、由实时行情驱动的模拟盘中，
-以及 Binance 现货和 USDT 本位永续合约的实盘执行器中。在任何环境下，每一笔订单都要经过同一个
-独立的风控。
+以及当前已实现的交易所适配器（Binance 现货和 USDT 本位永续合约）中。策略订单经过同一个
+独立风控；紧急降低风险敞口的平仓路径是文档中明确记录的例外。
+
+公开行情通过 CCXT 接入；实盘需要专门实现并验证交易所适配器。修改 `exchange:` 不代表已经支持
+该交易所实盘。面板行情和交易所专属情绪数据目前仍使用 Binance。详见
+[通用交易所接入方案](docs/EXCHANGE_INTEGRATION.md)、[合规与数据流说明](docs/COMPLIANCE.md)
+和[开源发布检查记录](docs/RELEASE_READINESS.md)。
 
 > **免责声明。** Trident 是基础设施，不是交易策略。它只附带一个教科书式的示例（50/200 SMA
 > 均线交叉）用于演示接口；该示例**不**应被期望盈利。交易加密资产存在重大亏损风险。本仓库中的
@@ -152,7 +157,14 @@ class MyStrategy(Strategy):
 6. 运行 `uv run python scripts/run_live.py --bot <name>`（现货）或 `uv run python scripts/run_live_perp.py --bot <name>`（永续合约）。
 7. 如果触发熔断，先排查原因，再运行 `uv run python scripts/revive.py --bot <name> --reviewed "..."`。
 
-任何时刻每个 bot 只能运行**一个**实盘执行器。
+任何时刻每个 bot 只能运行**一个**实盘执行器，实盘仅支持 **Linux / macOS**；缺少 POSIX 文件锁
+时拒绝运行。使用专用账户或子账户，不要让多个 bot 同时管理同一账户中的同一交易对。权限字段
+缺失或异常、未绑定 IP 白名单，以及 `.env` 可被组内或其他用户访问，都会导致实盘拒绝启动。
+手动运行前执行 `umask 077`，保护新建的本地运行数据。
+
+**风控在新的已收盘 K 线上检查，并非持续检查。** 15% 回撤阈值不等于最大损失保证；盘中波动、
+跳空、行情过期、API 中断和平仓失败都可能使损失扩大。项目没有自动设置交易所托管的保护性止损。
+使用实盘适配器前，请阅读[合规边界](docs/COMPLIANCE.md)。
 
 ## 情绪配置
 
@@ -177,12 +189,16 @@ sentiment:
 - **交易所行情数据**（K 线、行情、资金费率、多空比）：公开接口，受交易所 API 条款与频率限制约束。
 - **Reddit**（需主动开启）：使用 Reddit 公开的免鉴权 RSS/JSON 接口。Reddit 的用户协议
   （User Agreement）、数据 API 条款（Data API Terms）和负责任开发者政策（Responsible Builder
-  Policy）均适用，Reddit 可能屏蔽或不允许免鉴权的自动化访问；是否启用该数据源由你自行决定。
+  Policy）均适用。启用前须完成其要求的注册和访问许可；低频请求不等于获得授权。确认后才可设置
+  `TRIDENT_REDDIT_ACCESS_APPROVED=true`。此设置只是操作者的确认，不是本项目授予的数据访问权限。
   请在 `.env` 中把 `TRIDENT_USER_AGENT` 设为带联系方式的描述性值，例如
   `trident/0.1 (by u/yourname; you@example.com)`，并保持较低的请求频率（最多每小时一次）。
+  未设置授权确认或描述性 User-Agent 时，不会发起 Reddit 请求。
 - **新闻 RSS 源**（需主动开启）：仅供个人使用。不要再分发已存储的标题
   （`storage/sentiment/news.parquet`）。
 - **api.ipify.org**：仅在交易所鉴权失败后调用，用于报告你的出口 IP，方便你把它加入白名单。
+- **Telegram**（可选）：配置后会向 Telegram 及目标会话发送告警文本，可能包括 bot 名、交易对、
+  数量、价格、资金规模和风险事件。两个 Telegram 设置均留空时告警只保存在本地。分享日志前应审阅。
 
 ## 配置说明
 

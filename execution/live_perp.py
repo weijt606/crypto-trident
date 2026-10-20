@@ -221,11 +221,6 @@ class LivePerpTrader:
         problems = key_restriction_problems(r, "futures")
         if problems:
             raise TraderHalted("Perp live self-check failed: " + "; ".join(problems))
-        if str(r.get("ipRestrict")).lower() != "true":
-            msg = ("key has no IP whitelist; funds are isolated by disabled withdrawals/"
-                   "transfers, keep .env secrets safe")
-            log.warning("[self-check] %s", msg)
-            send_alert(f"{self.bot.name} perp live: {msg}")
 
     def _setup_margin(self, apply: bool = True) -> None:
         """Isolated margin + leverage, failing closed: an exchange rejection other than
@@ -267,7 +262,7 @@ class LivePerpTrader:
             self._min_amt = float(m["limits"]["amount"]["min"] or 0.0)
             self._min_cost = float((m["limits"].get("cost") or {}).get("min") or 0.0)
         except Exception as e:  # noqa: BLE001  test fakes have no market(); skip pre-check
-            log.info("Could not read min order limits (pre-check disabled): %s", str(e)[:80])
+            log.info("Could not read min order limits (pre-check disabled): %s", redact(e)[:80])
         # Position mode: in hedge (dual-side) mode every order needs positionSide or it is
         # rejected with -4061. Switching modes requires a flat account, so adapt instead.
         self._hedge = False
@@ -277,7 +272,7 @@ class LivePerpTrader:
             log.info("Position mode: %s",
                      "hedge (orders carry positionSide)" if self._hedge else "one-way")
         except Exception as e:  # noqa: BLE001  fakes lack this endpoint -> one-way
-            log.info("Position mode query failed (assuming one-way): %s", str(e)[:80])
+            log.info("Position mode query failed (assuming one-way): %s", redact(e)[:80])
 
     def _verify_margin(self) -> None:
         """Read back margin mode and leverage where the ccxt exchange supports it; refuse

@@ -23,7 +23,7 @@ Trident can place real orders with real money. Before running anything live:
   universal and internal transfer, margin borrowing and options**, bind an **IP whitelist**,
   and prefer a dedicated sub-account that holds only the capital you are willing to lose.
   The live executors re-check this at every start and refuse to run with a dangerous key;
-  a missing IP whitelist raises an alert.
+  unknown permission fields or a missing IP whitelist refuse startup.
 - Run `scripts/verify_trade_key.py` to check the key's permissions before going live.
 - The repo ships a pre-commit secret scanner: `git config core.hooksPath scripts/githooks`.
 - The dashboard binds to `127.0.0.1` only, rejects requests with a foreign `Host` header
@@ -32,11 +32,23 @@ Trident can place real orders with real money. Before running anything live:
 - Outbound calls: exchange APIs, the enabled sentiment sources, `api.ipify.org` (queried only
   after an exchange authentication failure to report your outbound IP) and, only if
   `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` are set, `api.telegram.org` (alert text, IP masked).
-- Every order path goes through `safety.guard.RiskGuard`. Do not add code paths that bypass it.
+  Alert text can disclose symbols, quantities, prices, capital and bot names to Telegram;
+  leave Telegram settings empty for local-only alerts.
+- Strategy orders go through `safety.guard.RiskGuard`. Emergency exposure-reducing flatten
+  paths are the documented exceptions; do not add other bypasses.
 - Live safety state (drawdown peak, daily halt, kill) is persisted and restored across
   restarts; only `scripts/revive.py`, run by a human, clears a kill.
+- Live execution requires Linux/macOS POSIX file locking; unsupported platforms halt.
+  `.env` must not be accessible to group/others on POSIX; trade-key loading refuses otherwise.
+  Use `umask 077` for manual runs. Do not share accounts/symbols between bots.
 - Only one process may manage a bot: executors take a lock on `<live_dir>/<bot>.lock` and a
   second instance exits with code 78. Orders are never re-sent for a decided bar;
   a timed-out send is resolved by client-id lookup.
 - Exchange error text is redacted (URL query strings and signatures stripped) before it
   reaches logs, the event table or alerts.
+- Risk checks run on closed bars, not continuously; no exchange-hosted stop is installed.
+  Thresholds do not cap losses during intrabar moves, gaps or outages.
+- Lightweight CI runs tests, scans history and working files, and verifies vendored file
+  hashes. A manual CI run additionally audits pinned Python and bundled npm dependencies.
+  CI does not connect to an operator account, deploy code or run trading services.
+  See `docs/RELEASE_READINESS.md`.

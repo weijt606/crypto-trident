@@ -1,4 +1,7 @@
 # Global configuration. Contains no secrets (those live in .env).
+# Public OHLCV / paper feed selection. Current live executors only accept binance.
+# Dashboard tickers and exchange-specific sentiment feeds currently use Binance.
+# Adding another live venue requires an adapter; see docs/EXCHANGE_INTEGRATION.md.
 exchange: binance
 storage_dir: storage
 

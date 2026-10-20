@@ -27,14 +27,22 @@ def exit_on_halt(fn: Callable[[], object]) -> None:
     carry signed query strings) and exits with NETWORK_ERROR_EXIT_CODE so the service
     manager restarts the process."""
     import ccxt  # local import: keeps this module importable without side effects
+    from execution.common import redact
 
     try:
         fn()
     except TraderHalted as e:
-        print(f"HALTED: {e.message}", file=sys.stderr)
+        print(f"HALTED: {redact(e.message)}", file=sys.stderr)
         sys.exit(HALT_EXIT_CODE)
     except ccxt.NetworkError as e:
-        from execution.common import redact  # local import: common imports this module
         print(f"NETWORK ERROR ({type(e).__name__}): {redact(e)} - transient, safe to restart",
               file=sys.stderr)
         sys.exit(NETWORK_ERROR_EXIT_CODE)
+    except ccxt.BaseError as e:
+        print(f"EXCHANGE ERROR ({type(e).__name__}): {redact(e)}; review before restarting",
+              file=sys.stderr)
+        sys.exit(HALT_EXIT_CODE)
+    except Exception as e:
+        print(f"STARTUP/EXECUTION ERROR ({type(e).__name__}): {redact(e)}; "
+              "review before restarting", file=sys.stderr)
+        sys.exit(HALT_EXIT_CODE)

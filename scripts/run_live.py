@@ -13,7 +13,7 @@ import sys
 
 from core.config import load_bot_config, load_system_config
 from execution.halt import TraderHalted, exit_on_halt
-from execution.live import LiveTrader, clamp_drawdown
+from execution.live import LiveTrader, clamp_drawdown, require_live_exchange
 from safety.guard import RiskConfig
 from strategies import build_strategy
 
@@ -52,6 +52,7 @@ def main() -> None:
           file=sys.stderr)
 
     def run() -> None:
+        require_live_exchange(sys_cfg.get("exchange", "binance"))
         risk_kwargs = dict(sys_cfg["risk"])
         # Same ceiling as the perp executor: a config typo can never loosen the kill line
         # past MAX_DRAWDOWN_CEILING (non-numeric / NaN / <= 0 halts with exit 78).

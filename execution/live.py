@@ -7,7 +7,7 @@ ccxt, and the exchange is the source of truth for the account.
 Execution-layer safeguards (on top of RiskGuard):
 - Key permission self-check at startup: withdrawals, universal/internal transfer,
   margin borrowing and options off, spot trading on; any violation refuses to start.
-  Missing IP whitelist is a warning. Repeated startup auth failures (see
+  An IP whitelist is required; unknown permission fields refuse startup. Repeated startup auth failures (see
   STARTUP_AUTH_FAIL_LIMIT) halt with exit 78 instead of restart-looping.
 - Single instance: an exclusive flock on <live_dir>/<name>.lock; a second process for
   the same bot refuses to start (exit 78).
@@ -70,6 +70,13 @@ _AUTH_ERROR_MARKERS = ("-2015", "-2014", "Invalid API-key", "-1022")
 
 BOOKED_IDS_KEEP = 200  # recent exchange order ids kept in state to refuse double booking
 MAX_DRAWDOWN_CEILING = 0.30  # live kill line may be tuned, but never loosened past this
+
+
+def require_live_exchange(exchange_id: str) -> None:
+    """Current private-order code is Binance-specific, regardless of CCXT coverage."""
+    if exchange_id != "binance":
+        raise TraderHalted("Unsupported live exchange: only the Binance adapter is implemented. "
+                           "See docs/EXCHANGE_INTEGRATION.md before adding an adapter.")
 
 
 def clamp_drawdown(value) -> float:
@@ -308,20 +315,11 @@ class LiveTrader:
             raise
         reset_startup_auth_failures(self.live_dir, self.bot.name)
 
-        def b(field: str) -> bool:
-            return str(r.get(field)).lower() == "true"
-
         # Hard requirements: with withdrawals and transfers disabled, a leaked key cannot
         # move funds out of the account (same rules as scripts/verify_trade_key.py).
         problems = key_restriction_problems(r, "spot")
         if problems:
             raise TraderHalted("Live startup self-check failed: " + "; ".join(problems))
-        # IP whitelist is recommended but not required; warn only.
-        if not b("ipRestrict"):
-            msg = ("key has no IP whitelist; funds are isolated by disabled withdrawals/"
-                   "transfers, keep .env secrets safe")
-            log.warning("[self-check] %s", msg)
-            send_alert(f"{self.bot.name} live: {msg}")
 
     # ---- account ----
 

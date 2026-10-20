@@ -393,11 +393,13 @@ def test_dangerous_key_permissions_refused(tmp_path, field, kind):
         (spot if kind == "spot" else perp)(tmp_path, ex)
 
 
-def test_perp_warns_without_ip_whitelist(tmp_path, monkeypatch):
-    alerts = []
-    monkeypatch.setattr("execution.live_perp.send_alert", lambda m: alerts.append(m))
-    perp(tmp_path)
-    assert any("no IP whitelist" in a for a in alerts)
+@pytest.mark.parametrize("kind", ["spot", "perp"])
+def test_live_refuses_without_ip_whitelist(tmp_path, kind):
+    ex = FakeExchange() if kind == "spot" else FakeFut()
+    restrictions = ex.sapi_get_account_apirestrictions()
+    ex.sapi_get_account_apirestrictions = lambda: dict(restrictions, ipRestrict=False)
+    with pytest.raises(TraderHalted, match="IP whitelist is required"):
+        (spot if kind == "spot" else perp)(tmp_path, ex)
 
 
 def test_startup_auth_failures_halt_after_limit(tmp_path, monkeypatch):

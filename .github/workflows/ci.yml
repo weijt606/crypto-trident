@@ -1,0 +1,47 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.11.20
+      - run: uv sync --frozen
+      - run: uv run --frozen pytest
+      - run: python scripts/check_vendor.py
+      - run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
+      - name: Scan complete history and working tree
+        run: |
+          "$(go env GOPATH)/bin/gitleaks" git --log-opts=--all --redact --no-banner
+          "$(go env GOPATH)/bin/gitleaks" dir . --redact --no-banner
+  dependency-audit:
+    # Run from the Actions tab before a release or after dependency updates.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pip-audit==2.10.1
+      - run: python scripts/audit_dependencies.py
+      - run: python scripts/check_vendor.py --online

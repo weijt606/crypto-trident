@@ -18,7 +18,7 @@ from typing import Any
 
 from execution.halt import TraderHalted
 
-try:  # POSIX only; on platforms without fcntl the lock degrades to a no-op with a warning.
+try:  # Live execution requires a POSIX advisory lock; never silently run unlocked.
     import fcntl
 except ImportError:  # pragma: no cover
     fcntl = None  # type: ignore[assignment]
@@ -59,10 +59,11 @@ class InstanceLock:
     The lock is released by close() or automatically when the process exits."""
 
     def __init__(self, live_dir: Path, name: str):
+        if fcntl is None:
+            raise TraderHalted("Live execution requires POSIX file locking (Linux/macOS); "
+                               "this platform is unsupported. Use paper trading instead.")
         self.path = Path(live_dir) / f"{name}.lock"
         self._f = open(self.path, "a+")
-        if fcntl is None:  # pragma: no cover
-            return
         try:
             fcntl.flock(self._f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as e:
@@ -183,27 +184,43 @@ def resolve_fill(exchange, symbol: str, resp: dict | None, cid: str,
 
 # ---- key permission checks ----
 
+def permission_value(r: dict, field: str) -> bool | None:
+    """Accept only exchange boolean values; missing/malformed is unknown, never False."""
+    if not isinstance(r, dict):
+        return None
+    value = r.get(field)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.lower() in ("true", "false"):
+        return value.lower() == "true"
+    return None
+
+
 def key_restriction_problems(r: dict, need: str) -> list[str]:
     """Hard failures for a trade key's API restrictions (same rules as
     scripts/verify_trade_key.py). need = "spot" or "futures"."""
-    def b(field: str) -> bool:
-        return str(r.get(field)).lower() == "true"
-
+    if not isinstance(r, dict):
+        return ["key restrictions response must be a mapping"]
+    if need not in ("spot", "futures"):
+        raise ValueError("need must be spot or futures")
     problems = []
-    if b("enableWithdrawals"):
-        problems.append("key has withdrawals enabled (must never be enabled)")
-    if b("permitsUniversalTransfer"):
-        problems.append("key has universal transfer enabled (breaks fund isolation)")
-    if b("enableInternalTransfer"):
-        problems.append("key has internal transfer enabled (breaks fund isolation)")
-    if b("enableMargin"):
-        problems.append("key has margin borrowing enabled")
-    if b("enableVanillaOptions"):
-        problems.append("key has options trading enabled")
-    if need == "spot" and not b("enableSpotAndMarginTrading"):
-        problems.append("key lacks spot trading permission")
-    if need == "futures" and not b("enableFutures"):
-        problems.append("key lacks futures permission")
+    requirements = {
+        "enableWithdrawals": (False, "withdrawals must be disabled"),
+        "permitsUniversalTransfer": (False, "universal transfer must be disabled"),
+        "enableInternalTransfer": (False, "internal transfer must be disabled"),
+        "enableMargin": (False, "margin borrowing must be disabled"),
+        "enableVanillaOptions": (False, "options trading must be disabled"),
+        "enableReading": (True, "reading permission is required"),
+        "ipRestrict": (True, "IP whitelist is required"),
+        ("enableSpotAndMarginTrading" if need == "spot" else "enableFutures"):
+            (True, f"{need} trading permission is required"),
+    }
+    for field, (want, message) in requirements.items():
+        got = permission_value(r, field)
+        if got is None:
+            problems.append(f"cannot verify {field}: missing or malformed permission")
+        elif got != want:
+            problems.append(message)
     return problems
 
 
@@ -239,14 +256,26 @@ def reset_startup_auth_failures(live_dir: Path, name: str) -> None:
 
 # ---- redaction ----
 
-_SIG_RE = re.compile(r"(signature|apiKey|X-MBX-APIKEY)=?[\"':\s]*[A-Za-z0-9]{16,}", re.IGNORECASE)
+# Require an assignment separator so ordinary prose such as "key has no IP" survives.
+_SIG_RE = re.compile(
+    r"(\b(?:[A-Za-z0-9]+[_-])*(?:api[_-]?key|api[_-]?secret|secret|signature|"
+    r"token|password|passwd|X-MBX-APIKEY|authorization)[\"']?\s*[:=]\s*)"
+    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\s,;}<>]+)", re.IGNORECASE)
 _QUERY_RE = re.compile(r"(https?://[^\s?\"']+)\?[^\s\"']*")
+_TELEGRAM_RE = re.compile(r"(https?://api\.telegram\.org/bot)[^/\s?\"']+", re.IGNORECASE)
+_BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 
 
 def redact(text: object) -> str:
     """Strip URL query strings (they carry timestamp/signature) and any signature/api
     key values from exchange error text before it goes to logs, events or alerts."""
     s = str(text)
+    from core.config import credential_values
+
+    for value in sorted(credential_values(), key=len, reverse=True):
+        s = s.replace(value, "<redacted>")
     s = _QUERY_RE.sub(r"\1?<redacted>", s)
-    s = _SIG_RE.sub(lambda m: f"{m.group(1)}=<redacted>", s)
+    s = _TELEGRAM_RE.sub(r"\1<redacted>", s)
+    s = _BEARER_RE.sub("Bearer <redacted>", s)
+    s = _SIG_RE.sub(lambda m: f"{m.group(1)}<redacted>", s)
     return s
