@@ -199,3 +199,19 @@ and sentiment timers, and optionally one live unit (`--live <bot>`). The dashboa
 `127.0.0.1`, rejects requests whose `Host` header is not `127.0.0.1:<port>` or
 `localhost:<port>`, sends a strict Content-Security-Policy and loads no third-party resources
 (ECharts is vendored in `monitor/static/`). Use an SSH tunnel (`ssh -L 8777:127.0.0.1:8777 <server>`) to view it remotely.
+
+## External agents and orchestration
+
+The repository exposes scripts and local records for operator tools, including coding agents
+such as Codex/Claude Code or a separate API orchestrator. There is no built-in LLM client,
+agent controller, remote command API or model-signal adapter. Model reasoning is external;
+indicators/backtests/accounting run in the host Python process, and long-running polling is
+supervised by the operator or systemd. Exchange API access is distinct from model API access.
+Read [AGENTS.md](../AGENTS.md) and [AGENT_OPERATIONS](AGENT_OPERATIONS.md) for CLI task mapping,
+side effects and deployment scope. These instructions are conventions, not a sandbox.
+
+A reference driver architecture has been reviewed read-only: non-interactive CLI invocation,
+provider-environment model routing, bounded process management and task-artifact checks.
+That driver and its private configuration are not included in this release. The proposed
+portable boundary and remaining implementation gaps are in
+[AGENT_OPERATIONS](AGENT_OPERATIONS.md#driver-boundary--驱动器边界).

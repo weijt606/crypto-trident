@@ -61,7 +61,44 @@ Trident can place real orders with real money. Before running anything live:
   runtime files manually before sharing.
 - Risk checks run on closed bars, not continuously; no exchange-hosted stop is installed.
   Thresholds do not cap losses during intrabar moves, gaps or outages.
-- Lightweight CI runs tests, scans history and working files, and verifies vendored file
-  hashes. A manual CI run additionally audits pinned Python and bundled npm dependencies.
+- Lightweight CI runs tests, checks indexed-file privacy rules, scans history and working
+  files for secrets, and verifies vendored file hashes. A manual CI run additionally audits pinned Python and bundled npm dependencies.
   CI does not connect to an operator account, deploy code or run trading services.
   See `docs/RELEASE_READINESS.md`.
+
+## External agent tools
+
+AGENTS.md and docs/AGENT_OPERATIONS.md describe an optional external workflow, not a built-in
+security boundary. Limit your agent's filesystem, shell and host access to the task. Keep
+model/API credentials in its own tool configuration, separate from exchange credentials.
+Do not send .env contents, private ledgers, raw logs or signed request URLs to a model;
+provide only the minimum masked summary needed. Installing services, health alerts and
+recovery commands have side effects described in the operations guide. CI does not authorize
+an agent to deploy to an operator host or change live/kill state.
+
+## Repository privacy checks and release boundary
+
+Run `python3 scripts/check_repository_safety.py` to inspect the Git index snapshot.
+The pre-commit hook and CI run the same check. It refuses common private files, local
+agent session directories, literal personal home paths and symlinks escaping the repository.
+It never follows symlinks or reads untracked private files; failure output contains only rule
+counts. Review the staged snapshot locally. A clean working file does not clean a different
+staged version. Ignore rules do not untrack files already committed.
+
+This complements gitleaks, which must still scan both history and working files. Neither
+check detects every private strategy, account identifier, image, custom data directory or
+secret. Local hooks must be installed and can be bypassed; CI runs after upload, so it cannot
+prevent the upload itself. Do not upload sensitive material to a remote as a way to test CI.
+
+Keep agent/model credentials separate from trading credentials. Agent transcripts, screenshots,
+archives and copied logs need manual review before sharing. Treat repository instructions,
+issues, model replies and external content as untrusted input; none independently authorizes
+access to another checkout, publication, service deployment or credential use. For constrained
+analysis, use a separate checkout or isolated environment without private account files.
+
+Public release is currently on hold. Do not add real credentials to CI, publish runtime data
+as artifacts, enable automatic deployment, or change repository visibility as part of these
+checks. If a credential is exposed, revoke/rotate it first, assess access logs and affected
+copies, then remove the disclosed material. Deleting a file or recreating a repository does
+not revoke credentials or erase existing copies. Mandatory legal responsibility remains
+subject to applicable law; see DISCLAIMER.md and docs/COMPLIANCE.md.

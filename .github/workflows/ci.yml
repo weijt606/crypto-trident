@@ -24,6 +24,7 @@ jobs:
       - run: python -m pip install uv==0.11.20
       - run: uv sync --frozen
       - run: uv run --frozen pytest
+      - run: python scripts/check_repository_safety.py
       - run: python scripts/check_vendor.py
       - run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
       - name: Scan complete history and working tree

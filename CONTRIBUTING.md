@@ -34,3 +34,17 @@ credentials. Before a release or after dependency changes, manually run CI from 
 tab to include the dependency audit; see [RELEASE_READINESS](docs/RELEASE_READINESS.md).
 Changes to vendored assets must update `monitor/static/vendor.json`, the component license
 texts and `NOTICE`. New exchange adapters must satisfy [EXCHANGE_INTEGRATION](docs/EXCHANGE_INTEGRATION.md).
+
+## Working with a coding agent
+
+Give your agent [AGENTS.md](AGENTS.md) and the [operations guide](docs/AGENT_OPERATIONS.md).
+Use the same CLI and validation as manual work, review the resulting diff, and keep private
+operator data out of prompts. Agent-generated code and prose need the same correctness,
+provenance and test review as other contributions; do not claim a model integration exists
+unless the corresponding implementation is included.
+
+Public release is currently on hold; tests and reviews do not authorize publication or
+operator-host deployment. Before committing, run `python3 scripts/check_repository_safety.py`
+against the staged snapshot and scan for secrets with gitleaks. Do not commit agent session
+records, private machine paths, account data or private reference material. The index check
+is intentionally independent of matching secret formats and does not print matched content.

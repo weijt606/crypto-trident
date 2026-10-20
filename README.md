@@ -1,5 +1,7 @@
 # Trident
 
+> **Publication on hold (2026-10-20).** The maintainer has paused public release pending security and compliance review. Existing license terms are unchanged.
+
 **English** | [简体中文](README.zh-CN.md)
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -24,6 +26,11 @@ closed OHLCV bars. This repository shares framework code from a personal project
 with a small example configuration, so others can read, reproduce and adapt the implementation.
 The bundled 50/200 SMA crossover demonstrates the strategy interface; it is not a strategy
 recommendation or a claim of profitable performance.
+
+The existing CLI can also be used from your own coding agent, such as Codex or Claude Code,
+or an external API-based orchestrator. Agent reasoning belongs to that external setup;
+backtests, indicators and account calculations run in Python on the host. See
+[Using your own agent](#using-your-own-agent) for the current boundary.
 
 The central interface is `Strategy.on_bar(bar, account)`: a strategy receives a closed bar
 and an account snapshot, then returns trade intents. Backtest, paper and live execution use
@@ -70,6 +77,32 @@ The project is suited to bar-based strategy experiments, studying execution and 
 code, and building small, self-hosted tools around those pieces. It uses REST polling rather
 than a tick or order-book execution engine. Public-data coverage depends on the selected
 exchange's endpoints; CCXT support alone does not establish compatibility with this project.
+
+## Using your own agent
+
+You can ask an external agent to read the code, implement a strategy, run tests and
+backtests, inspect masked reports, or deploy and check paper services on an authorized
+host. The maintainer uses agents in their personal workflow; the open-source repository
+provides CLI entry points, configuration and local records for that workflow.
+
+- **Agent instructions:** [AGENTS.md](AGENTS.md) records development conventions and
+  operational boundaries. Your tool must read or be given the file; it is not a permission
+  enforcement mechanism.
+- **Operations guide:** [Agent-assisted development and operations](docs/AGENT_OPERATIONS.md)
+  maps tasks to existing commands, explains their side effects, and describes Linux paper
+  service deployment and example agent requests.
+- **Compute and APIs:** model reasoning comes from your external agent/provider setup.
+  Numerical computation and long-running execution use the machine running Python. Exchange
+  APIs supply data and account/order access; they are not model-compute services.
+
+The personal workflow also has a dedicated driver pattern for non-interactive agent calls,
+model selection, timeout/retry handling and checking task records. The current open-source
+copy has not ported that driver, task queue or provider configuration; the
+[driver boundary](docs/AGENT_OPERATIONS.md#driver-boundary--驱动器边界) explains the distinction.
+There is no bundled LLM client, autonomous agent loop, model-generated trading signal adapter
+or remote job/deployment API. The included SMA uses bar inputs; optional headline sentiment
+uses a lexicon. No model API key is required by this repository. Live promotion and recovery
+remain separate operator decisions; agents should not change them as part of paper setup.
 
 ## Dashboard
 
@@ -125,7 +158,7 @@ exchange's endpoints; CCXT support alone does not establish compatibility with t
   timestamps and source-specific delays control which values the framework exposes at bar
   time. A separate CLI reports Spearman IC and quantile returns for evaluating momentum or
   contrarian hypotheses; it does not automatically approve or block live trading.
-- **Small deployment and contribution tools.** Run scripts directly or install Linux
+- **CLI tools for manual or agent-assisted operation.** Run scripts directly or install Linux
   user-level systemd services and timers. A pre-commit hook scans staged content for secrets.
   Lightweight CI runs tests, secret scans and vendored-file checks; a manual run adds known
   dependency-vulnerability checks. CI does not deploy to an operator's machine.
@@ -216,33 +249,13 @@ class MyStrategy(Strategy):
 Register it in `strategies/__init__.py` (`STRATEGIES`), then copy `config/bots/sma-demo.yaml`
 to a new file, set `strategy:` and `params:`, and run it with `--bot <file name>`.
 
-## Going live (read this first)
+## Live execution scope
 
-1. Paper trade long enough to trust the behavior, review an out-of-sample backtest, and run the
-   circuit-breaker drill (`uv run pytest tests/test_live_drill.py`). This is a minimum engineering
-   check, not evidence of future profitability.
-2. Create a **dedicated** Binance API key: reading + trading only, **withdrawals disabled**,
-   **IP whitelist** on, ideally in a sub-account holding only capital you can afford to lose.
-3. Put trading keys in `.env` (copy `.env.example`, `chmod 600 .env`) or an externally managed
-   process environment. Public data and dashboard commands need no key. `BINANCE_READ_*`
-   settings are reserved for private read-only integrations, not used by the bundled scripts.
-4. `uv run python scripts/verify_trade_key.py` to check permissions.
-5. Set `live.cash_cap` / `initial_cash` in `config/system.yaml` (or `cash_cap` in the bot yaml for
-   perps), review the `risk:` limits (including `allowed_symbols`, which live executors
-   require), then **manually** change the bot's `stage` to `live`.
-6. `uv run python scripts/run_live.py --bot <name>` (spot) or `uv run python scripts/run_live_perp.py --bot <name>` (perp).
-7. If the kill switch fires, investigate, then `uv run python scripts/revive.py --bot <name> --reviewed "Reviewed halt cause, account positions and risk limits"`.
-
-Run only **one** live executor per bot at any time, on **Linux or macOS**; live execution
-refuses to start without POSIX file locking. Use a dedicated account/sub-account and do not
-run several bots against the same account and symbol. Missing or malformed key-permission
-fields, a missing IP whitelist, or a group/world-accessible `.env` refuse live startup.
-Run manually with `umask 077` to keep newly created runtime data private.
-
-**Risk checks run on new closed bars, not continuously.** A configured 15% drawdown threshold
-is not a maximum-loss guarantee. Intrabar moves, gaps, stale data, API outages and inability
-to close a position can cause larger losses. No exchange-hosted protective stop is installed.
-Read [COMPLIANCE.md](docs/COMPLIANCE.md) before using the live adapter.
+The repository includes a Binance spot and USDT-M perpetual implementation. Live use needs
+separate review of account eligibility, permissions, capital and operating conditions;
+backtest or paper results do not approve it automatically. Detailed setup and limitations
+are in [Live execution notes](docs/LIVE_TRADING.md). For first use, start with the research
+and paper commands above.
 
 ## Sentiment configuration
 
@@ -340,8 +353,9 @@ scripts/     CLI entry points, systemd installer, git hooks
 config/      system.yaml (global) and bots/*.yaml (one file per bot)
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design and [SECURITY.md](SECURITY.md)
-for key handling.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design,
+[docs/AGENT_OPERATIONS.md](docs/AGENT_OPERATIONS.md) for agent-assisted operation, and
+[SECURITY.md](SECURITY.md) for key handling.
 
 ## License
 

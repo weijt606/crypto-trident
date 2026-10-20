@@ -17,8 +17,9 @@
    software does not establish an advisory, brokerage or dealer relationship.
 3. **High risk.** Cryptocurrencies and crypto derivatives (including perpetual futures and
    leveraged products) are highly volatile and speculative. You can lose some or **all** of
-   your capital, and leveraged positions can be liquidated rapidly. Only use money you can
-   afford to lose entirely.
+   your capital, and leveraged positions can be liquidated rapidly. Depending on the product and account
+   terms, losses may exceed initial margin and additional payment may be required. This
+   warning is not an invitation to trade.
 4. **No performance claims.** The bundled example strategy exists solely to demonstrate the
    API; its profitability has not been established. Past performance, backtests and paper-trading
    results do not predict or guarantee future or live results.
@@ -45,6 +46,25 @@
    Liability) of the [LICENSE](LICENSE) apply in full; if anything here conflicts with the
    LICENSE, the LICENSE governs your rights to use, copy, modify and distribute the software.
 
+10. **Mandatory law.** Nothing in this document excludes or limits liability that cannot
+    lawfully be excluded or limited, including liability for intentional misconduct or gross
+    negligence where applicable. It does not exempt anyone from regulatory, administrative
+    or criminal responsibility. "Research", "personal", "free" and "open source" do not
+    themselves establish legality. Publication and related support require a separate review
+    of the actual conduct and jurisdictions; the publisher's obligations are not transferred
+    to users by this disclaimer.
+11. **Security and privacy.** Secret scanning, redaction, access checks and CI reduce certain
+    risks; they do not certify that code, history, dependencies or outputs are secure or
+    free of private data. External agents and model providers may receive files, prompts or
+    tool output that the operator exposes. Instructions in repository files are not a
+    sandbox or a permission system. Do not submit credentials, private ledgers or raw logs
+    to issues, models or maintainers. Do not use a model's output as authorization to publish,
+    deploy, change account permissions or place orders. Review third-party data handling terms.
+12. **Operational limits.** Capital settings and loss thresholds are not guarantees or
+    account-level isolation. Orders may be missed, duplicated, partially filled or remain
+    unresolved; halting a process does not cancel exchange orders or ensure positions are
+    closed. See [SECURITY](SECURITY.md) and [COMPLIANCE](docs/COMPLIANCE.md).
+
 Please read this disclaimer before using the software. If the English and Chinese versions
 differ, the English version prevails.
 
@@ -60,7 +80,8 @@ differ, the English version prevails.
    或其他任何专业建议，也不构成买入、卖出或持有任何加密货币、衍生品、证券或其他资产的要约、
    邀约或推荐。发布本软件不建立投资顾问、经纪或交易商关系。
 3. **高风险提示。** 加密货币及其衍生品（包括永续合约和杠杆产品）波动剧烈、投机性极强。
-   你可能损失部分乃至**全部**本金，杠杆仓位可能被迅速强制平仓。请只使用你能承受全部损失的资金。
+   你可能损失部分乃至**全部**本金，杠杆仓位可能被迅速强制平仓。依产品与账户规则，损失可能超过初始保证金，
+   并可能产生额外付款义务。本风险提示不构成参与交易的邀请。
 4. **不作任何收益承诺。** 随附的示例策略仅用于演示接口用法，其盈利能力未经验证。历史表现、
    回测与模拟盘结果不代表也不保证未来或实盘结果。
 5. **软件风险。** 本软件可能存在缺陷或出现非预期行为，且依赖第三方交易所、API 与数据源，
@@ -79,5 +100,17 @@ differ, the English version prevails.
 9. **与许可证的关系。** 本免责声明是对 Apache License 2.0 的补充说明，不修改该许可证。
    [LICENSE](LICENSE) 第 7 条（担保免责）与第 8 条（责任限制）完整适用；如有冲突，你使用、复制、
    修改和分发本软件的权利以 LICENSE 为准。
+
+10. **强制性法律。** 本文不排除或限制适用法律规定不得排除或限制的责任，包括在适用情形下因故意
+    或重大过失产生的责任；也不免除任何监管、行政或刑事责任。“研究”“个人”“免费”“开源”本身
+    不证明行为合法。发布及相关支持应按实际行为和涉及地区另行审查；发布者依法承担的义务，不能
+    通过本声明转移给使用者。
+11. **安全与隐私。** 密钥扫描、脱敏、访问检查和 CI 只能降低部分风险，不证明代码、历史、依赖或
+    输出绝对安全或不含隐私。外部 Agent 与模型提供方可能接收到操作者允许访问的文件、提示词和
+    工具输出；仓库指令文件不构成沙箱或权限系统。不要向 Issue、模型或维护者提交凭据、私人账本
+    或原始日志。模型输出不能作为发布、部署、修改账户权限或下单的授权。应审阅第三方数据处理条款。
+12. **运行边界。** 资金配置和亏损阈值不构成保证，也不隔离账户资产。订单可能遗漏、重复、部分成交
+    或结果不明；进程停机不等于撤销交易所订单或已经平仓。详见 [SECURITY](SECURITY.md) 和
+    [COMPLIANCE](docs/COMPLIANCE.md)。
 
 使用前请阅读本免责声明。若中英文版本存在差异或歧义，以英文版本为准。

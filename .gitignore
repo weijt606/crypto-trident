@@ -8,6 +8,12 @@
 *.p12
 *.pfx
 .envrc
+# External agent sessions, transcripts, local credentials and task output
+.claude/
+.codex/
+.agent-runs/
+*.jsonl
+*.log
 
 # Local data: market data, ledgers, state, logs
 storage/

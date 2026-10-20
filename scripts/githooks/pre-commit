@@ -63,6 +63,12 @@ ips=$(printf '%s\n' "$added" | \
 [ -n "$ips" ] && fail "public IP address in added lines (mask it, or confirm it is e.g. a version number):" "$ips"
 
 # 7) gitleaks, when available, as an additional scanner.
+if command -v python3 >/dev/null 2>&1; then
+    python3 scripts/check_repository_safety.py || fail "repository privacy check failed."
+else
+    fail "python3 is required for the repository privacy check."
+fi
+
 if command -v gitleaks >/dev/null 2>&1; then
     gitleaks protect --staged --redact --no-banner || fail "gitleaks reported a potential secret."
 fi
