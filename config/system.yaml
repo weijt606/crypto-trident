@@ -1,4 +1,4 @@
-# Global configuration. Contains no secrets (those live in .env).
+# Global configuration. No secrets here; use the process environment or .env.
 # Public OHLCV / paper feed selection. Current live executors only accept binance.
 # Dashboard tickers and exchange-specific sentiment feeds currently use Binance.
 # Adding another live venue requires an adapter; see docs/EXCHANGE_INTEGRATION.md.
@@ -6,12 +6,12 @@ exchange: binance
 storage_dir: storage
 
 fees:
-  taker_bps: 10        # spot taker 0.1% (without BNB discount)
-  perp_taker_bps: 5    # USDT-margined perpetual taker 0.05%
+  taker_bps: 10        # assumed spot taker fee: 0.1%; set for your account
+  perp_taker_bps: 5    # assumed perp taker fee: 0.05%; not a current fee quote
 slippage_bps: 5        # assumed market-order slippage 0.05%
 
 # Risk overlay for perp strategies (spot strategies are unaffected:
-# allow_short is always False and leverage is always 1).
+# allow_short defaults to False and leverage defaults to 1).
 risk_perp:
   max_leverage: 3      # code also enforces a hard cap of min(x, 3)
 
@@ -45,6 +45,6 @@ risk:
   max_order_notional: 1000   # max notional per order (USDT) -- set it near your capital
   max_position_pct: 0.95     # max position as a fraction of equity (lower it when running several bots)
   daily_loss_pct: 0.03       # 3% daily loss -> no new positions for the rest of the UTC day
-  max_drawdown_pct: 0.15     # 15% drawdown from peak -> flatten and stop; needs manual revive
+  max_drawdown_pct: 0.15     # closed-bar threshold -> request flatten/halt; live needs manual revive
   max_orders_per_minute: 10  # per 60 s of bar time = max orders per bar for 1m+ bars
-  min_order_notional: 10     # skip dust orders to limit fee drag (exchange minimum is ~5 USDT)
+  min_order_notional: 10     # configured dust threshold; actual exchange minima vary

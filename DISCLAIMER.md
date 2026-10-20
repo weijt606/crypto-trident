@@ -13,14 +13,14 @@
    documentation, issues, discussions or any output produced by the software (backtests,
    reports, signals, dashboards) — constitutes investment, financial, trading, legal, tax or
    any other professional advice, nor an offer, solicitation or recommendation to buy, sell
-   or hold any cryptocurrency, derivative, security or other asset. The authors and
-   contributors are not licensed financial advisers, brokers or dealers.
+   or hold any cryptocurrency, derivative, security or other asset. Publication of this
+   software does not establish an advisory, brokerage or dealer relationship.
 3. **High risk.** Cryptocurrencies and crypto derivatives (including perpetual futures and
    leveraged products) are highly volatile and speculative. You can lose some or **all** of
    your capital, and leveraged positions can be liquidated rapidly. Only use money you can
    afford to lose entirely.
 4. **No performance claims.** The bundled example strategy exists solely to demonstrate the
-   API and is not expected to be profitable. Past performance, backtests and paper-trading
+   API; its profitability has not been established. Past performance, backtests and paper-trading
    results do not predict or guarantee future or live results.
 5. **Software risk.** The software may contain bugs, may behave unexpectedly, and depends on
    third-party exchanges, APIs and data sources that can fail, change or be unavailable. It
@@ -58,10 +58,10 @@ differ, the English version prevails.
 2. **不构成投资建议。** 本仓库中的任何内容——包括代码、配置、示例、文档、Issue、讨论，以及
    软件产生的任何输出（回测、报告、信号、面板数据）——均不构成投资、金融、交易、法律、税务
    或其他任何专业建议，也不构成买入、卖出或持有任何加密货币、衍生品、证券或其他资产的要约、
-   邀约或推荐。作者与贡献者均不是持牌的投资顾问、经纪商或交易商。
+   邀约或推荐。发布本软件不建立投资顾问、经纪或交易商关系。
 3. **高风险提示。** 加密货币及其衍生品（包括永续合约和杠杆产品）波动剧烈、投机性极强。
    你可能损失部分乃至**全部**本金，杠杆仓位可能被迅速强制平仓。请只使用你能承受全部损失的资金。
-4. **不作任何收益承诺。** 随附的示例策略仅用于演示接口用法，不应被期望盈利。历史表现、
+4. **不作任何收益承诺。** 随附的示例策略仅用于演示接口用法，其盈利能力未经验证。历史表现、
    回测与模拟盘结果不代表也不保证未来或实盘结果。
 5. **软件风险。** 本软件可能存在缺陷或出现非预期行为，且依赖第三方交易所、API 与数据源，
    这些服务可能故障、变更或不可用。本软件按"原样"提供，不附带任何形式的担保（见

@@ -3,12 +3,13 @@
 Thanks for your interest in Trident!
 
 1. Fork, create a branch, and keep changes focused.
-2. `uv sync && uv run pytest` must pass. Add tests for new behavior.
+2. `uv sync --frozen && uv run --frozen pytest` must pass. Add tests for new behavior.
+   If changing dependencies, update `uv.lock` before checking the frozen environment.
 3. Enable the secret-scanning hook: `git config core.hooksPath scripts/githooks`.
 4. Respect the design rules in `docs/ARCHITECTURE.md`, especially:
    - strategy code must not branch on backtest/paper/live;
-   - every order must pass `RiskGuard.check_order` (the only exceptions are the documented
-     reduce-only flatten paths);
+   - strategy orders must pass `RiskGuard.check_order`; emergency flatten exceptions are
+     documented in the architecture, including the perpetual baseline-restoration case;
    - no secrets or personal account data in code, configs or commits.
 5. Do not submit PRs that claim or advertise strategy profitability. Example strategies are
    for demonstrating the API only.

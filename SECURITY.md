@@ -4,21 +4,26 @@
 
 Please do **not** open a public issue for security problems. Use GitHub's
 "Report a vulnerability" (private security advisory) on this repository instead.
-We aim to acknowledge reports within a few days.
+Reports are handled on a best-effort basis by a personal-project maintainer; response times
+are not guaranteed.
 
 If the "Report a vulnerability" button is unavailable, open a public issue titled
-"Security contact request" with no technical details, and a maintainer will reach out privately.
+"Security contact request" with no technical details to ask the maintainer to arrange a
+private reporting channel. Never include credentials or exploit details in that issue.
 
 ## Operating Trident safely
 
 Trident can place real orders with real money. Before running anything live:
 
-- **API keys live only in `.env`** (gitignored, `chmod 600`). Never put keys in code,
-  configs, issues, logs or commit messages.
-- Use **two keys**: a read-only key for data/monitoring, and a trade key. Only the live
-  executors and `scripts/verify_trade_key.py` read the trade key from `.env`. `.env` is
-  parsed by `core.config` and is not exported into the process environment, so child
-  processes and unrelated modules do not inherit it.
+- **Supply API keys through `.env`** (gitignored, `chmod 600`) **or an externally managed
+  process environment.** Environment values take precedence. Never put keys in code,
+  shared configs, issues, logs or commit messages.
+- Public data, paper trading and the dashboard need no key. The `BINANCE_READ_*` settings
+  and `read_only_keys()` helper are reserved for private read-only integrations and are
+  not used by the bundled scripts. Keep any such key separate from trading credentials.
+  Only live executors and `scripts/verify_trade_key.py` call `trade_keys()`. `core.config`
+  does not export `.env` values into `os.environ`; externally injected environment values
+  retain normal child-process inheritance.
 - Trade key permissions: reading + spot/futures trading only. **Disable withdrawals,
   universal and internal transfer, margin borrowing and options**, bind an **IP whitelist**,
   and prefer a dedicated sub-account that holds only the capital you are willing to lose.
@@ -37,15 +42,23 @@ Trident can place real orders with real money. Before running anything live:
 - Strategy orders go through `safety.guard.RiskGuard`. Emergency exposure-reducing flatten
   paths are the documented exceptions; do not add other bypasses.
 - Live safety state (drawdown peak, daily halt, kill) is persisted and restored across
-  restarts; only `scripts/revive.py`, run by a human, clears a kill.
+  restarts; `scripts/revive.py` is the documented human-reviewed way to clear a live kill.
+  Files can be changed by the operating-system user; this is not a tamper-proof boundary.
+  Paper account recovery does not restore the live executor's persisted breaker state.
 - Live execution requires Linux/macOS POSIX file locking; unsupported platforms halt.
   `.env` must not be accessible to group/others on POSIX; trade-key loading refuses otherwise.
-  Use `umask 077` for manual runs. Do not share accounts/symbols between bots.
+  Use `umask 077` for manual runs. Ensure custom storage/log directories are gitignored too.
+  Do not share accounts/symbols between bots.
 - Only one process may manage a bot: executors take a lock on `<live_dir>/<bot>.lock` and a
   second instance exits with code 78. Orders are never re-sent for a decided bar;
-  a timed-out send is resolved by client-id lookup.
+  a timed-out send triggers client-id lookup. Failed lookup can still leave the outcome
+  unknown, and marking a bar before sending can skip a signal after a crash. Review the
+  account before recovery; these mechanisms do not guarantee exactly-once execution.
 - Exchange error text is redacted (URL query strings and signatures stripped) before it
-  reaches logs, the event table or alerts.
+  reaches the implemented exchange-error log/event/alert paths. Log formatting and alert
+  persistence/push also redact known patterns and already-loaded credential values. This
+  does not identify every possible secret or remove account and trade details; review
+  runtime files manually before sharing.
 - Risk checks run on closed bars, not continuously; no exchange-hosted stop is installed.
   Thresholds do not cap losses during intrabar moves, gaps or outages.
 - Lightweight CI runs tests, scans history and working files, and verifies vendored file
