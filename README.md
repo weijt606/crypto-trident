@@ -2,7 +2,8 @@
 
 > **Publication on hold (2026-10-20).** The maintainer has paused public release pending security and compliance review. Existing license terms are unchanged.
 
-**English** | [简体中文](README.zh-CN.md)
+[![English](https://img.shields.io/badge/Language-English-blue)](README.md)
+[![简体中文](https://img.shields.io/badge/语言-简体中文-lightgrey)](README.zh-CN.md)
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
@@ -21,22 +22,19 @@ Repository and package name: `crypto-trident`.
 > Use at your own risk. Read the full [DISCLAIMER](DISCLAIMER.md) before using this software.
 > 加密货币及衍生品交易风险极高，可能损失全部本金，使用风险自负。使用前请阅读完整[免责声明](DISCLAIMER.md)。
 
-Trident is a Python framework for developing and running crypto trading strategies on
-closed OHLCV bars. This repository shares framework code from a personal project, together
-with a small example configuration, so others can read, reproduce and adapt the implementation.
-The bundled 50/200 SMA crossover demonstrates the strategy interface; it is not a strategy
-recommendation or a claim of profitable performance.
+Trident is a Python project for testing crypto trading ideas. You can try a rule on past
+prices (a backtest), then watch it run on current market data with virtual money (paper
+trading). It also includes live execution, which places real orders and requires separate
+setup and review.
 
-The existing CLI can also be used from your own coding agent, such as Codex or Claude Code,
-or an external API-based orchestrator. Agent reasoning belongs to that external setup;
-backtests, indicators and account calculations run in Python on the host. See
-[Using your own agent](#using-your-own-agent) for the current boundary.
+The example uses two moving averages of price, over 50 and 200 bars, to demonstrate how a
+strategy works. Its profitability has not been established. You can replace it with your
+own Python strategy and reuse that code across backtest, paper and live modes. Simulated
+trades can differ from real exchange fills.
 
-The central interface is `Strategy.on_bar(bar, account)`: a strategy receives a closed bar
-and an account snapshot, then returns trade intents. Backtest, paper and live execution use
-that interface, with separate implementations for data access, fills and accounting. This
-lets you reuse strategy logic while comparing the behavior of each environment. It does
-not make simulated fills equivalent to exchange execution.
+You can run the commands yourself or ask your own Codex, Claude Code or external API-based
+agent to help. Model reasoning comes from your agent setup; backtests and calculations run
+on the machine running Python. See [Using your own agent](#using-your-own-agent).
 
 Public market data uses CCXT. The current live implementation is specific to **Binance spot
 and USDT-margined perpetuals**. Changing `exchange:` does not add live support for another
@@ -115,53 +113,30 @@ remain separate operator decisions; agents should not change them as part of pap
 > are illustrative only. They are not a backtest, not real market history and not real or expected
 > trading results, and say nothing about how the example strategy would perform.
 
-## Features
+## What you can do
 
-- **A shared strategy interface.** Implement `on_bar()` to produce signals, declare a warmup
-  length, and optionally expose indicator state and trigger descriptions through `describe()`.
-  Register the class in `strategies.STRATEGIES` and select it in a bot YAML file. Startup
-  warmup fetches historical bars and replays them to rebuild indicators; strategies can opt
-  out of replay.
-  Keeping exchange access out of strategies is a development convention, not a code sandbox.
-- **Local data and experiment records.** Fetch public OHLCV history through CCXT, store bars
-  in Parquet, and record fills, equity, events and strategy snapshots in SQLite. CLI scripts
-  generate Markdown reports with return, drawdown, Sharpe, fees and buy-and-hold comparisons.
-  The backtest CLI defaults to a chronological 70% in-sample / 30% out-of-sample split with a
-  fresh strategy instance for each segment; `--oos` changes that split and `--oos 0` disables it.
-- **Spot and perpetual simulation.** Spot accounting tracks cash, position cost and fees.
-  Perpetual accounting supports signed positions, funding settlements and a simplified
-  liquidation model. Paper trading restores account snapshots and cost basis from its local
-  ledger; it does not restore the live executor's persisted breaker state. Backtest and paper
-  use the same accounting implementations, with the different fill reference prices
-  described above.
-- **Risk checks separate from signal generation.** `RiskGuard` checks allowed symbols,
-  order size, position exposure, order frequency, daily loss and drawdown. Daily-loss halts
-  block increases in exposure; a drawdown kill requests flattening and a halt. Emergency
-  exposure-reducing flatten paths are documented exceptions to normal order checks. The
-  supplied perpetual CLI paths cap leverage at 3×; live executors persist breaker state and
-  refuse an active kill until it is manually reviewed and revived.
-- **Explicitly gated live execution.** The spot and perpetual executors verify key
-  permissions and an IP whitelist, require a symbol allow-list and `stage: live`, and take
-  a per-bot POSIX file lock. They handle exchange precision, order limits and perpetual
-  position modes, reconcile positions, persist state, attach client order IDs and query an
-  order after an ambiguous send. These measures reduce some failure modes; they do not
-  guarantee exactly-once execution or that a position can always be closed. The perpetual
-  retirement script requests a flatten, verifies the result and halts the bot.
-- **A local operational view.** The dashboard displays bot status, equity and daily PnL,
-  buy-and-hold comparisons, candlesticks with fill markers, fills, events, alerts, strategy
-  state and configured risk limits. It reads ledgers without writing them, listens only on
-  loopback, and serves its own static assets. Heartbeats and health checks report polling
-  activity, halt markers and recent error events; optional Telegram pushes carry alerts.
-- **Optional sentiment research.** Fetch Fear & Greed, funding rates and long/short ratios;
-  news RSS and Reddit require opt-in, with additional Reddit access acknowledgement. Daily
-  source values are normalized, weighted and smoothed into a composite score. Availability
-  timestamps and source-specific delays control which values the framework exposes at bar
-  time. A separate CLI reports Spearman IC and quantile returns for evaluating momentum or
-  contrarian hypotheses; it does not automatically approve or block live trading.
-- **CLI tools for manual or agent-assisted operation.** Run scripts directly or install Linux
-  user-level systemd services and timers. A pre-commit hook scans staged content for secrets.
-  Lightweight CI runs tests, secret scans and vendored-file checks; a manual run adds known
-  dependency-vulnerability checks. CI does not deploy to an operator's machine.
+- **Test an idea on past prices.** Download historical data and run a backtest. The report
+  shows returns, fees and drawdown (the fall from a previous account-value peak). By default,
+  it splits the history into an earlier 70% and a later 30% so you can inspect each separately.
+- **Try it with virtual money.** Paper trading follows current public market data and records
+  simulated trades. It supports spot and perpetual futures simulations, with a simplified
+  liquidation model. No trading API key is needed.
+- **Write your own rules.** A Python strategy reads a completed price bar and account values,
+  then returns buy or sell signals. A configuration file selects the trading pair, bar
+  interval and strategy settings.
+- **See what happened.** The local dashboard shows account value, daily profit and loss,
+  positions, trades and alerts. Data and reports are stored locally. Telegram alerts are optional.
+- **Explore market sentiment.** Optional tools collect the Fear & Greed index, funding rates
+  and long/short ratios for comparison with later price moves. These are research inputs,
+  not proven trading signals.
+- **Use scripts or your own agent.** Commands cover data downloads, tests, backtests and
+  reports. Linux services can keep paper trading running. There is no built-in autonomous
+  agent driver, and CI does not deploy to your machine.
+
+Live execution checks key permissions and configured order and loss limits. These checks do
+not guarantee a maximum loss or successful closing of a position. Read the
+[live execution guide](docs/LIVE_TRADING.md) before connecting an account. Interface and
+accounting details are in the [architecture guide](docs/ARCHITECTURE.md).
 
 ## Current scope and limits
 
