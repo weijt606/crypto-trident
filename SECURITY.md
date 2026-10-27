@@ -13,7 +13,11 @@ private reporting channel. Never include credentials or exploit details in that 
 
 ## Operating Trident safely
 
-Trident can place real orders with real money. Before running anything live:
+Trident includes experimental executors that can place real orders with real money.
+See [LIVE_TRADING](docs/LIVE_TRADING.md) for supported paths and operational limits, and
+[COMPLIANCE](docs/COMPLIANCE.md) for eligibility and service boundaries. Key checks do not
+verify legal access, suitability or product availability. This project does not supervise
+accounts or offer an emergency-response service. Before running anything live:
 
 - **Supply API keys through `.env`** (gitignored, `chmod 600`) **or an externally managed
   process environment.** Environment values take precedence. Never put keys in code,
@@ -29,7 +33,9 @@ Trident can place real orders with real money. Before running anything live:
   and prefer a dedicated sub-account that holds only the capital you are willing to lose.
   The live executors re-check this at every start and refuse to run with a dangerous key;
   unknown permission fields or a missing IP whitelist refuse startup.
-- Run `scripts/verify_trade_key.py` to check the key's permissions before going live.
+- Run `scripts/verify_trade_key.py` to inspect the key's permissions. It makes authenticated
+  reads and prints spot balances and estimated values; keep its output private. It is
+  spot-oriented and is not a complete futures-account or compliance check.
 - The repo ships a pre-commit secret scanner: `git config core.hooksPath scripts/githooks`.
 - The dashboard binds to `127.0.0.1` only, rejects requests with a foreign `Host` header
   (DNS-rebinding defense) and loads no third-party resources. If you run it on a server,
@@ -61,6 +67,12 @@ Trident can place real orders with real money. Before running anything live:
   runtime files manually before sharing.
 - Risk checks run on closed bars, not continuously; no exchange-hosted stop is installed.
   Thresholds do not cap losses during intrabar moves, gaps or outages.
+- If an order outcome is unknown, prevent further automated submissions under your incident
+  procedure and reconcile exchange orders, fills and exposure before deciding how to recover.
+  The current code does not implement a complete automatic unknown-order recovery protocol.
+  Stopping the executor does not cancel orders or close positions. `cash_cap` is not an
+  exchange-enforced limit on assets at risk. `revive.py` resets local breaker references;
+  it neither reconciles the account nor verifies the statement supplied in `--reviewed`.
 - Lightweight CI runs tests, checks indexed-file privacy rules, scans history and working
   files for secrets, and verifies vendored file hashes. A manual CI run additionally audits pinned Python and bundled npm dependencies.
   CI does not connect to an operator account, deploy code or run trading services.

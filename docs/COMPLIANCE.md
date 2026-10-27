@@ -1,26 +1,94 @@
 # 合规边界与数据流 / Compliance and data flows
 
-核对日期：2026-10-20。本文件记录发布与运行需要审查的事项，不构成对特定个人、地区或商业模式
+全球发布边界核对日期：2026-10-28。本文件记录发布与运行需要审查的事项，不构成对特定个人、地区或商业模式
 的法律许可。与 [DISCLAIMER](../DISCLAIMER.md) 一起阅读；不增加 Apache 2.0 许可证之外的使用限制。
 
-## 源码发布与服务运营
+## Publication and service boundaries / 源码发布与服务边界
 
-本仓库提供研究软件、示例和文档。公开源码不等于已取得经营交易服务、投资建议、代客管理、
-收费信号或交易所导流的许可。是否适用监管要求取决于发布者所在地、用户所在地、实际功能、
-推广方式、收费方式及支持行为；改掉交易所名字或写“仅供研究”不能替代该判断。
+The current scope retains experimental live executors for self-hosted operation. Publishing
+source code and providing trading services are different activities; this distinction is a
+review framework, not a finding that publication is exempt everywhere. Applicable duties
+depend on the publisher, operator, customers, locations, products and actual conduct.
+“Global”, “free”, “research” and “open source” are not regulatory permissions.
 
-若计划向用户提供实盘部署、维护、代运营、账户托管、收费交易信号或交易所推广，应在开展前
-针对具体业务取得合适的法律意见。不要要求用户把交易密钥或账户数据提交给维护者。
+This repository supplies software and technical documentation. It does not include hosted
+execution, custody, account management or personalized investment advice. Technical support
+must not request users' trading credentials or take control of their accounts. Any separate
+service must be assessed on its own facts. Apache 2.0 rights are unchanged; this document
+neither grants a financial license nor adds a software-use restriction.
 
-中国大陆相关业务应核对现行的银发〔2026〕42号。该通知自 2026-02-06 施行，同时废止银发
-〔2021〕237号；对境内虚拟货币相关业务及有关服务、营销和协助行为设有严格规定。
-不能据此直接推断每一种源码发布行为都违法，也不能从开源许可证或免责声明推断行为已经合规。
+当前范围保留供操作者自行部署的实验性实盘执行器。源码发布与交易服务是不同活动；这种区分是
+审查框架，不代表任何地方都豁免源码发布。适用义务取决于发布者、操作者、客户、所在地、产品
+和实际行为。“全球”“免费”“研究”“开源”均不是监管许可。
 
-- [八部门通知原文（中国证监会）](https://www.csrc.gov.cn/csrc/c100028/c7614318/content.shtml)
-- [有关负责人答记者问](https://www.csrc.gov.cn/csrc/c100028/c7614320/content.shtml)
+仓库提供软件与技术文档，不包含托管执行、资产托管、账户管理或个性化投资建议。技术支持不应
+索取交易凭据或控制用户账户；另行服务应按实际内容单独评估。Apache 2.0 权利不变，本文既不
+授予金融许可，也不增加软件使用限制。
 
-其他司法辖区、具体交易所、账户和衍生品产品也须分别审查适用资格。项目不提供地域限制规避、
-KYC 绕过或受限服务接入方案。
+| Activity / 活动 | Review needed / 审查重点 |
+| --- | --- |
+| Source, generic examples, bug fixes / 源码、通用示例、缺陷修复 | Accurate capability and risk disclosures, provenance, privacy and applicable publication rules; no blanket exemption assumed. / 准确披露能力与风险、权属、隐私及适用发布规则，不预设全面豁免。 |
+| Installation and paid technical support / 安装与付费技术支持 | Define access, responsibilities and promises; assess whether actual work becomes advice, order execution or account control. / 界定访问权限、责任和承诺，判断实际工作是否构成建议、执行或账户控制。 |
+| Personalized parameters, signals, copy trading / 个性化参数、信号、跟单 | Review investment-advice, derivatives and promotion rules, including any available exemptions. / 审查投资建议、衍生品与推广规则及可能适用的豁免。 |
+| Hosted bots, user keys, discretionary trading, performance fees / 托管 bot、接收密钥、全权交易、业绩分成 | Review authorization/registration, custody or trading authority, security, conflicts and client obligations before offering the service. / 提供前审查许可或登记、资产托管或交易控制、安全、利益冲突与客户义务。 |
+| Exchange referrals or performance marketing / 交易所导流或业绩宣传 | Review promotion restrictions, compensation disclosures and product/audience eligibility; disclaimers alone do not resolve these. / 审查推广限制、报酬披露、产品及受众资格，不能仅依靠免责声明。 |
+
+## Jurisdiction examples / 地区审查示例
+
+These are selected official references checked on 2026-10-28, not a worldwide legal survey
+or a conclusion about Trident's regulatory status. Check current rules before changing the
+service, audience, location or products. Spot and derivatives need separate classification.
+
+下列为 2026-10-28 核对的部分官方参考，不是全球法律调查，也不判定 Trident 的监管身份。服务、
+受众、地区或产品变化前应重新核对现行规则；现货与衍生品须分别分类。
+
+- **United States / 美国.** NFA describes CTAs as persons or organizations advising others
+  for compensation or profit about futures, futures options, certain forex or swaps;
+  advice may be direct or through publications. A paid strategy or managed bot needs
+  analysis of instruments, conduct and registration/exemptions, not an assumption that
+  delivering software removes those questions. This definition does not decide every
+  spot-asset or securities-law question.
+  NFA 的 CTA 定义包括为报酬或利润提供上述产品交易建议，直接建议与出版物等间接建议均可能
+  涉及。付费策略或代管 bot 须分析产品、行为和登记/豁免，不能因通过软件交付就跳过；该定义
+  不解决所有现货资产或证券法问题。
+  [NFA CTA definition](https://www.nfa.futures.org/members/cta/index.html)
+- **European Union / 欧盟.** MiCA Article 59 addresses authorization to provide in-scope
+  crypto-asset services; Article 81 imposes suitability and other duties for advice and
+  portfolio management. MiCA excludes crypto-assets qualifying as financial instruments
+  under Article 2(4)(a); derivatives may require a different financial-services analysis.
+  These provisions do not establish that a generic source-code publisher is a CASP or
+  that every crypto product is covered by MiCA.
+  MiCA 第 59 条涉及范围内服务的授权，第 81 条对建议和组合管理设有适当性等义务；第 2(4)(a)
+  条排除属于金融工具的加密资产，衍生品可能须另按金融服务规则审查。这些条文不证明通用源码
+  发布者就是 CASP，也不代表所有加密产品都受 MiCA 规管。
+  [Article 59](https://www.esma.europa.eu/publications-and-data/interactive-single-rulebook/mica/article-59-authorisation),
+  [Article 81](https://www.esma.europa.eu/publications-and-data/interactive-single-rulebook/mica/article-81-providing-advice-crypto-assets),
+  [Article 2](https://www.esma.europa.eu/publications-and-data/interactive-single-rulebook/mica/article-2-scope)
+- **United Kingdom / 英国.** FCA states that cryptoasset firms marketing to UK consumers
+  fall within the financial-promotions regime even when overseas. Whether a particular
+  README, demo, referral or communication constitutes a regulated promotion depends on
+  its content and circumstances; a disclaimer is not an automatic exemption.
+  FCA 指出面向英国消费者营销的加密资产业务即使位于境外也受金融推广制度约束。具体 README、
+  演示、导流或沟通是否构成受规管推广取决于内容和情形，免责声明不是自动豁免。
+  [FCA marketing guidance](https://www.fca.org.uk/firms/cryptoassets/marketing-uk-consumers)
+
+For other markets, separately check local advice, execution, custody, promotion and product
+rules. A venue's legal entity and account/product availability matter; a Binance API path
+or CCXT listing establishes neither legal access nor affiliation. Public API availability,
+KYC and key permissions are not substitutes for that review. The software has no legal
+eligibility, suitability or geographic enforcement mechanism and provides no bypass procedure.
+
+其他市场应分别审查建议、执行、托管、推广和产品规则。交易所法律实体与账户/产品可用性很重要；
+Binance API 路径或 CCXT 收录不证明合法访问或关联关系。接口可用、KYC 和密钥权限不能代替审查。
+软件没有法律资格、适当性或地域强制机制，也不提供绕过方法。
+
+The earlier mainland-China references remain relevant only if an activity has that nexus;
+they do not determine the status of other markets. The 2026-02-06 notice and accompanying
+explanation are preserved here for regional review, not as a global publication test.
+此前的中国大陆参考仅在活动涉及该地区时另行审查，不决定其他市场的判断；保留相关原文供地区
+审查使用，不作为全球发布标准。
+[Notice / 通知](https://www.csrc.gov.cn/csrc/c100028/c7614318/content.shtml),
+[Official explanation / 答记者问](https://www.csrc.gov.cn/csrc/c100028/c7614320/content.shtml)
 
 ## 数据和隐私
 
@@ -56,13 +124,24 @@ Alternative.me 数据须在展示处注明来源，面板已标注。公共接�
 Python 依赖从锁文件安装，其各自许可仍适用；分发 Docker、安装包、wheel 或可执行程序时，
 需要另行核对随包组件的许可文本和通知，不应把所有依赖统一标记为 Apache 2.0。
 
-## 当前发布决定与声明效力
+## Release status and effect of statements / 发布状态与声明效力
 
-2026-10-20：维护者决定先不公开发布，先完善免责声明与信息安全措施。保留实盘的公开方案仍待
-结合发布者与用户所在地、实际功能和支持行为专项审查。CI、安全扫描或免责声明均不构成审批。
-本轮“安全风控”指凭据、隐私、Agent 权限、供应链与仓库发布边界，不指调整交易策略或亏损阈值。
+Live functionality is retained. Publication remains on hold pending review; retaining the
+code and improving these documents do not approve publication, deployment or live trading.
+Tests and scans are engineering evidence, not legal or real-money safety certification.
+The [release record](RELEASE_READINESS.md) distinguishes historical and current evidence.
 
-免责声明不能转移发布者自身依法承担的义务，不能免除行政或刑事责任；民事责任限制受强制性
-法律约束。例如中国《民法典》第506条规定了合同免责条款的无效情形，包括故意或重大过失造成
-对方财产损失。具体适用需按实际法律关系判断。
-[《民法典》原文（最高人民法院）](https://www.court.gov.cn/zixun/xiangqing/233181.html)
+Apache 2.0 Sections 7–9 address warranty, liability and accepting additional obligations,
+subject to their terms and applicable law. Describing operator responsibilities does not
+transfer the publisher's own legal duties or exclude liability that cannot be excluded.
+Actual advice, control, marketing and promises matter even when a document labels the
+project as software. Seek qualified jurisdiction-specific advice before offering a separate
+financial service; this document cannot resolve that service's status.
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt)
+
+保留实盘功能，公开发布仍待审查；保留代码和完善文档不批准发布、部署或实盘交易。测试与扫描
+是工程证据，不是法律或真实资金安全认证；[发布记录](RELEASE_READINESS.md)区分历史与本轮证据。
+
+Apache 2.0 第 7–9 条在其条款和适用法律下规定担保、责任及额外义务。说明操作者责任不转移
+发布者自身法定义务，也不排除不得排除的责任。即使文档将项目定位为软件，实际建议、控制、
+推广和承诺仍影响判断。另行提供金融服务前应取得适用地区的专业意见，本文不能确定其法律身份。

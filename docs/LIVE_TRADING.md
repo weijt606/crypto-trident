@@ -1,62 +1,143 @@
 # Live execution notes / 实盘执行说明
 
-These notes describe the current implementation; they are not an exchange recommendation,
-a legal authorization or a guarantee of execution. Read [DISCLAIMER](../DISCLAIMER.md),
-[COMPLIANCE](COMPLIANCE.md) and [SECURITY](../SECURITY.md) first. Publishing technical setup
-instructions does not establish that live use is permitted for a particular operator.
+The live executors are experimental software for self-hosted, operator-controlled use.
+They implement Binance spot and USDT-M perpetual order paths on Linux/macOS. They are not
+an exchange recommendation, a financial service offering, a legal authorization or an
+execution guarantee. Read [DISCLAIMER](../DISCLAIMER.md), [COMPLIANCE](COMPLIANCE.md),
+[SECURITY](../SECURITY.md) and the [architecture](ARCHITECTURE.md) before connecting an account.
 
-本文记录当前实现的配置方式，不构成交易所推荐、法律许可或执行保证。先阅读上述免责声明、
-合规边界和安全说明。将说明移至此处不会改变代码功能或消除相关风险。
-Commands below are run from the repository root. / 下列命令均在仓库根目录执行。
+实盘执行器是供操作者自行部署和控制的实验性软件，在 Linux/macOS 上实现 Binance 现货和 USDT
+本位永续下单路径，不构成交易所推荐、金融服务要约、法律许可或执行保证。接入账户前先阅读
+上述免责声明、合规、安全及架构文档。下列命令均在仓库根目录执行。
 
-## English
+## Eligibility and support / 使用资格与支持边界
 
-1. Paper trade long enough to trust the behavior, review an out-of-sample backtest, and run the
-   circuit-breaker drill (`uv run pytest tests/test_live_drill.py`). This is a minimum engineering
-   check, not evidence of future profitability.
-2. Create a **dedicated** Binance API key: reading + trading only, **withdrawals disabled**,
-   **IP whitelist** on, ideally in a sub-account holding only capital you can afford to lose.
-3. Put trading keys in `.env` (copy `.env.example`, `chmod 600 .env`) or an externally managed
-   process environment. Public data and dashboard commands need no key. `BINANCE_READ_*`
-   settings are reserved for private read-only integrations, not used by the bundled scripts.
-4. `uv run python scripts/verify_trade_key.py` to check permissions.
-5. Set `live.cash_cap` / `initial_cash` in `config/system.yaml` (or `cash_cap` in the bot yaml for
-   perps), review the `risk:` limits (including `allowed_symbols`, which live executors
-   require), then **manually** change the bot's `stage` to `live`.
-6. `uv run python scripts/run_live.py --bot <name>` (spot) or `uv run python scripts/run_live_perp.py --bot <name>` (perp).
-7. If the kill switch fires, investigate, then `uv run python scripts/revive.py --bot <name> --reviewed "Reviewed halt cause, account positions and risk limits"`.
+Determine the applicable jurisdiction, exchange legal entity, account eligibility and
+product permissions separately for spot and derivatives. Public API access, successful
+KYC, a valid trading key or `stage: live` alone does not settle those questions. The code
+has no legal-eligibility or suitability check. Do not bypass geographic, identity or product
+restrictions. See the jurisdiction examples in [COMPLIANCE](COMPLIANCE.md).
 
-Run only **one** live executor per bot at any time, on **Linux or macOS**; live execution
-refuses to start without POSIX file locking. Use a dedicated account/sub-account and do not
-run several bots against the same account and symbol. Missing or malformed key-permission
-fields, a missing IP whitelist, or a group/world-accessible `.env` refuse live startup.
-Run manually with `umask 077` to keep newly created runtime data private.
+The repository provides software and technical documentation, without a hosted trading
+service, custody, managed accounts or personalized investment advice. Bug reports and code
+review do not create an account-monitoring or emergency-response service. Never send the
+maintainer credentials or unredacted account records. A separate service, paid support,
+signals or exchange promotion needs its own scope and legal review; these docs do not
+approve it. These statements describe project scope and do not add restrictions to Apache 2.0.
 
-**Risk checks run on new closed bars, not continuously.** A configured 15% drawdown threshold
-is not a maximum-loss guarantee. Intrabar moves, gaps, stale data, API outages and inability
-to close a position can cause larger losses. No exchange-hosted protective stop is installed.
-Read [COMPLIANCE.md](COMPLIANCE.md) before using the live adapter.
+现货与衍生品须分别核对适用地区、交易所法律实体、账户资格和产品权限。公共接口可访问、通过
+KYC、交易密钥有效或设置 `stage: live`，单独都不能解决这些问题。代码不进行法律资格或适当性
+检查，不应绕过地域、身份或产品限制。各地区示例见[合规边界](COMPLIANCE.md)。
 
-## 中文
+仓库提供软件与技术文档，不包含托管交易服务、资产托管、代管账户或个性化投资建议。缺陷反馈
+和代码审阅不构成账户监控或应急响应服务。不要向维护者提交凭据或未脱敏账户记录。另行提供的
+服务、付费支持、信号或交易所推广须单独界定范围并审查，本文不予批准。这是项目范围说明，
+不增加 Apache 2.0 许可限制。
 
-1. 模拟盘跑足够长的时间，直到你信任它的行为；审阅样本外回测；并运行熔断演练
-   （`uv run pytest tests/test_live_drill.py`）。这只是最低限度的工程检查，不是未来盈利的证据。
-2. 创建一个**专用**的 Binance API key：只开读取 + 交易权限，**禁用提现**，开启 **IP 白名单**，
-   最好放在一个只存放你能承受损失的资金的子账户中。
-3. 把交易 key 放进 `.env`（复制 `.env.example`，`chmod 600 .env`）或由外部管理的进程环境中。
-   公开数据与面板不需要 key；`BINANCE_READ_*` 是给私有只读接入预留的配置，随附脚本目前不使用。
-4. 运行 `uv run python scripts/verify_trade_key.py` 检查权限。
-5. 在 `config/system.yaml` 中设置 `live.cash_cap` / `initial_cash`（永续合约则在 bot yaml 中设置
-   `cash_cap`），审阅 `risk:` 限额（包括实盘执行器必需的 `allowed_symbols`），然后**手动**把 bot
-   的 `stage` 改为 `live`。
-6. 运行 `uv run python scripts/run_live.py --bot <name>`（现货）或 `uv run python scripts/run_live_perp.py --bot <name>`（永续合约）。
-7. 如果触发熔断，先排查原因，再运行 `uv run python scripts/revive.py --bot <name> --reviewed "已检查停机原因、账户持仓与风险限额，确认恢复"`。
+## Known execution limits / 已知执行限制
 
-任何时刻每个 bot 只能运行**一个**实盘执行器，实盘仅支持 **Linux / macOS**；缺少 POSIX 文件锁
-时拒绝运行。使用专用账户或子账户，不要让多个 bot 同时管理同一账户中的同一交易对。权限字段
-缺失或异常、未绑定 IP 白名单，以及 `.env` 可被组内或其他用户访问，都会导致实盘拒绝启动。
-手动运行前执行 `umask 077`，保护新建的本地运行数据。
+| Limit | English | 中文 |
+| --- | --- | --- |
+| Risk response | Checks run on new closed bars; no exchange-hosted protective stop is installed automatically. Gaps, intrabar moves and outages can exceed thresholds. | 风控按新闭合 K 线检查，不自动设置交易所托管止损；跳空、盘中波动和中断可能使损失超过阈值。 |
+| Capital and coordination | `cash_cap` is a local sizing/accounting setting, not an exchange-enforced asset boundary. Bot locks do not coordinate different bots or hosts sharing an account and symbol. | `cash_cap` 是本地规模/记账配置，不是交易所强制资产隔离；bot 文件锁不协调共享账户和交易对的不同 bot 或主机。 |
+| Unknown orders | Client-id lookup and fill polling are bounded. Failed lookup can leave an outcome unknown; there is no complete durable order-intent recovery protocol. | 客户端订单号查询与成交轮询次数有限，查询失败可能仍然结果不明；没有完整的持久化订单意图恢复协议。 |
+| Perpetual settings | Startup attempts margin/leverage setup. Unsupported or failed read-back is logged and skipped; failed position-mode lookup assumes one-way mode. | 永续启动会尝试设置保证金模式和杠杆；不支持或失败的读回会记录并跳过，持仓模式查询失败时按单向模式处理。 |
+| Closing and baseline | Failed closes, partial fills and below-precision residuals can leave exposure. Restoring a pre-existing baseline can increase exchange net exposure while closing the bot's offsetting position. | 平仓失败、部分成交和低于精度的残余可能留下敞口；关闭 bot 的对冲持仓以恢复原有基线时，可能增加交易所净敞口。 |
+| Tests and simulation | Fake-exchange tests, a chronological split and paper fills do not establish profitability or live execution safety. | 假交易所测试、时间切分与模拟成交不证明盈利能力或实盘执行安全。 |
 
-**风控在新的已收盘 K 线上检查，并非持续检查。** 15% 回撤阈值不等于最大损失保证；盘中波动、
-跳空、行情过期、API 中断和平仓失败都可能使损失扩大。项目没有自动设置交易所托管的保护性止损。
-使用实盘适配器前，请阅读[合规边界](COMPLIANCE.md)。
+A dedicated account/sub-account reduces interference but does not guarantee a loss limit.
+Depending on product and account terms, leveraged losses can exceed initial margin. A
+stopped process, an exit code or a local ledger cannot prove the exchange account is flat.
+
+专用账户或子账户有助于减少干扰，但不保证损失上限。依产品与账户条款，杠杆损失可能超过初始
+保证金。进程停止、退出码或本地账本都不能证明交易所账户已经空仓。
+
+## Reviewed setup / 审阅后的配置流程
+
+The following is a technical sequence for an operator who has independently decided that
+live use is permitted. It does not approve any particular account, capital amount or strategy.
+
+以下是操作者独立确认实盘使用获准后的技术流程，不批准任何具体账户、资金规模或策略。
+
+1. Review strategy behavior, fee/slippage assumptions, out-of-sample results and paper
+   records. Run the fake-exchange drill: `uv run --frozen pytest tests/test_live_drill.py`.
+   No duration of paper operation or passing result proves readiness for real funds.
+   审阅策略行为、费用滑点假设、样本外结果和模拟账本，并运行上述假交易所演练；模拟时长和
+   测试通过都不证明真实资金运行已安全。
+2. Use a dedicated trading key with reading and the required market permission. Disable
+   withdrawals, universal/internal transfers, margin borrowing and options; bind an IP
+   whitelist. Use a dedicated account/sub-account and avoid other position managers on the
+   same account and symbol. The executor requires POSIX file locking.
+   使用专用交易 key，开启读取及所需市场权限，禁用提现、通用/内部转账、保证金借贷和期权，
+   绑定 IP 白名单。使用专用账户/子账户，避免同账户同交易对有其他持仓管理者；执行器要求 POSIX 锁。
+3. Keep keys in `.env` (copy `.env.example`, set `chmod 600 .env`) or an externally managed
+   process environment. Environment settings take precedence. Use `umask 077` for manual
+   runs. Public data, paper and dashboard commands need no key; `BINANCE_READ_*` is a
+   reserved integration helper, unused by bundled commands.
+   凭据保存在 `.env`（从示例复制并设置上述权限）或外部管理的进程环境中，环境值优先。手动运行
+   前设置 `umask 077`。公开数据、模拟盘与面板无需 key；`BINANCE_READ_*` 是随附命令未使用的预留配置。
+4. `uv run --frozen python scripts/verify_trade_key.py` makes authenticated read requests
+   and prints non-zero spot balances and estimated values. Keep its output private. Its
+   spot-oriented check requires spot trading permission and reports futures permission
+   separately; it is not a complete futures-account check or a legal/suitability check.
+   The live executor independently checks its required market permissions at startup.
+   该命令使用交易密钥执行鉴权读取，并打印非零现货余额与估值，输出应保密。检查偏向现货，要求
+   现货交易权限并另行报告合约权限，不是完整合约账户检查或法律/适当性检查；执行器启动时另查所需市场权限。
+5. Review `risk:` including the required non-empty `allowed_symbols`. For spot, review
+   `live.initial_cash` and `live.cash_cap` in `config/system.yaml`; for perps, bot `cash_cap`
+   takes precedence over system `live.cash_cap`. Check balances, open orders, positions,
+   position mode, margin mode and leverage at the exchange. Arrange independent monitoring
+   and a response plan. Only the human operator may set `stage: live`.
+   审阅 `risk:`（包括必需且非空的 `allowed_symbols`）。现货审阅系统的 `live.initial_cash` 和
+   `live.cash_cap`；永续优先取 bot 的 `cash_cap`，否则取系统值。独立核对交易所余额、未结订单、
+   持仓、持仓模式、保证金模式及杠杆，安排监控与处置方案。仅由人工操作者设置 `stage: live`。
+6. The commands below start real execution. The perpetual startup can also change margin
+   mode and leverage. A local stage or permission check does not make these commands a dry run.
+   以下命令启动真实执行，永续启动还可能修改保证金模式和杠杆；阶段与权限检查不使其成为预览。
+
+   ```sh
+   # Choose the command matching the reviewed bot market; these can place real orders.
+   uv run --frozen python scripts/run_live.py --bot <name>
+   uv run --frozen python scripts/run_live_perp.py --bot <name>
+   ```
+
+## Unknown outcomes, halt and recovery / 结果不明、停机与恢复
+
+If an order outcome is unknown, do not treat an unsuccessful lookup as proof of no fill or
+blindly resubmit it. Prevent further automated submissions under your operating procedure,
+then independently reconcile exchange orders, fills, balances and positions with local
+records. Stopping automation leaves exchange-side orders and exposure in place. The
+current code does not automatically enforce this complete incident procedure.
+
+A kill or soft-cut is a reason for investigation. Do not delete state/markers or repeatedly
+restart to bypass it. `scripts/revive.py` does not query the exchange or close positions:
+it removes the kill marker and resets persisted breakers, including drawdown and daily-loss
+references for re-baselining at the next mark. `--reviewed` stores an operator statement;
+it does not verify that a review happened. Stop the executor, establish order outcomes and
+residual exposure, and investigate the halt before deciding whether to reset and restart.
+
+For an independently reviewed recovery, the syntax is
+`uv run --frozen python scripts/revive.py --bot <name> --reviewed "<actual review conclusion>"`.
+Supply the actual conclusion (at least 10 characters), without credentials or account identifiers.
+Do not copy a generic approval statement as evidence. The command writes local state and
+an event; restarting live execution is a separate operator action.
+
+`scripts/retire_live_perp.py --yes` can send real closing orders and write a soft-cut marker;
+it is not a read-only health check. Without `--yes` it uses authenticated reads and local
+startup bookkeeping, but does not send orders or change margin/leverage. Review residual
+positions independently, including dust and any restored baseline. There is no equivalent
+bundled spot retirement CLI. See [architecture](ARCHITECTURE.md) for closing exceptions.
+
+订单结果不明时，不把查询失败当作未成交，也不盲目补单。按运行预案阻止后续自动提交，再将
+交易所订单、成交、余额和持仓与本地记录独立核对。停止自动化仍会留下交易所订单及敞口；当前
+代码不会自动强制执行这套完整事故处置流程。
+
+kill 或 soft-cut 需要调查，不应删除标记/状态或反复重启绕过。`scripts/revive.py` 不查询交易所，
+也不平仓；它移除 kill 标记、重置持久化熔断状态，并让回撤和日亏损基准在下次估值时重设。
+`--reviewed` 只记录操作者说明，不验证审阅确实发生。决定重置或重启前，停止执行器、查明订单
+结果及残余敞口并调查停机原因。上述恢复语法须填写真实结论（至少 10 字符），不包含密钥或
+账户标识，不把通用批准语句当作证据。命令会写本地状态与事件，重新启动实盘是另一个操作决定。
+
+`scripts/retire_live_perp.py --yes` 会尝试真实平仓并写 soft-cut 标记，不是只读健康检查。不加
+`--yes` 时仍有鉴权读取和本地启动记录，但不发单、不改保证金模式和杠杆。须独立核对残余持仓，
+包括零头和恢复的基线。当前没有对应的现货退役 CLI；平仓例外见[架构](ARCHITECTURE.md)。

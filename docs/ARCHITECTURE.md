@@ -63,6 +63,9 @@ Backtest and manual paper commands do not enforce the entire lifecycle; the serv
 uses the label to select paper units, and dashboard/health views also use it for grouping.
 The live executors refuse to start unless `stage: live` and `risk.allowed_symbols` is set and
 non-empty. Promoting a bot to live is a human decision: automation must never edit the stage.
+The stage is a configuration gate, not a legal-eligibility or suitability assessment.
+Experimental live paths and their command side effects are documented in
+[LIVE_TRADING](LIVE_TRADING.md); publishing them does not provide a managed trading service.
 
 ## Risk guard
 

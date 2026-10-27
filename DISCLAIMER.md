@@ -5,16 +5,18 @@
 **A research and personal project. Nothing here is investment advice.**
 
 1. **Purpose.** Trident is an open-source software project published as a research and
-   personal project, intended for education and experimentation. It is a software framework,
-   not a trading strategy, a trading service, or a recommendation of any kind. This
-   disclaimer does not restrict or modify the rights granted to you under the Apache License,
+   personal project, intended for education and experimentation. It includes experimental
+   live executors that can place real orders. The repository supplies software and technical
+   documentation, without hosted trading, custody, account management or personalized advice.
+   This disclaimer does not restrict or modify the rights granted to you under the Apache License,
    Version 2.0.
 2. **Not investment advice.** Nothing in this repository — code, configuration, examples,
    documentation, issues, discussions or any output produced by the software (backtests,
-   reports, signals, dashboards) — constitutes investment, financial, trading, legal, tax or
-   any other professional advice, nor an offer, solicitation or recommendation to buy, sell
-   or hold any cryptocurrency, derivative, security or other asset. Publication of this
-   software does not establish an advisory, brokerage or dealer relationship.
+   reports, signals, dashboards) — is intended as personalized investment, financial,
+   trading, legal, tax or other professional advice, or as an offer, solicitation or
+   recommendation to buy, sell or hold any asset. Publishing source code alone is not an
+   offer to enter an advisory, brokerage or dealer relationship. These descriptions do not
+   determine the legal status of actual conduct, including related advice, promotion or services.
 3. **High risk.** Cryptocurrencies and crypto derivatives (including perpetual futures and
    leveraged products) are highly volatile and speculative. You can lose some or **all** of
    your capital, and leveraged positions can be liquidated rapidly. Depending on the product and account
@@ -25,13 +27,13 @@
    results do not predict or guarantee future or live results.
 5. **Software risk.** The software may contain bugs, may behave unexpectedly, and depends on
    third-party exchanges, APIs and data sources that can fail, change or be unavailable. It
-   is provided "AS IS", without warranty of any kind (see [LICENSE](LICENSE)). You are solely
-   responsible for reviewing, testing and operating it, for securing your API keys, and for
-   every order it places on your behalf.
-6. **Your responsibility / compliance.** You alone are responsible for determining whether
-   your use of this software and of any exchange or data source is lawful in your
-   jurisdiction, and for complying with all applicable laws, regulations, tax obligations
-   and third-party terms of service. Crypto trading or derivatives trading may be restricted
+   is provided "AS IS", subject to the terms and exceptions in [LICENSE](LICENSE) and
+   applicable law. Operators must review, test and manage its operation, secure API keys
+   and independently verify orders and exposure. This does not exclude the authors' or
+   contributors' own obligations or liabilities under mandatory law.
+6. **Operator compliance.** Operators must determine whether their use of this software
+   and any exchange or data source is lawful in the relevant jurisdictions, and comply
+   with applicable laws, regulations, tax obligations and third-party terms of service. Crypto trading or derivatives trading may be restricted
    or prohibited where you live. Do not use this software where doing so is illegal.
 7. **No affiliation.** This project is not affiliated with, endorsed by or sponsored by
    Binance or any other exchange, data provider or company mentioned. Names are used only to
@@ -63,7 +65,10 @@
 12. **Operational limits.** Capital settings and loss thresholds are not guarantees or
     account-level isolation. Orders may be missed, duplicated, partially filled or remain
     unresolved; halting a process does not cancel exchange orders or ensure positions are
-    closed. See [SECURITY](SECURITY.md) and [COMPLIANCE](docs/COMPLIANCE.md).
+    closed. Key checks and `stage: live` do not verify legal eligibility or suitability.
+    The project does not provide account supervision or emergency response. Related paid
+    support, signals, hosted execution or referrals require separate review based on actual
+    conduct. See [SECURITY](SECURITY.md) and [COMPLIANCE](docs/COMPLIANCE.md).
 
 Please read this disclaimer before using the software. If the English and Chinese versions
 differ, the English version prevails.
@@ -72,23 +77,23 @@ differ, the English version prevails.
 
 **本项目为研究与个人项目，不构成任何投资建议。**
 
-1. **项目性质。** Trident 是一个作为研究与个人项目发布的开源软件，旨在用于学习与实验。
-   它是一个软件框架，不是交易策略、交易服务，也不构成任何形式的推荐。本免责声明不限制、
-   也不修改你依据 Apache License 2.0 所享有的权利。
+1. **项目性质。** Trident 是一个作为研究与个人项目发布的开源软件，旨在用于学习与实验，包含
+   可下达真实订单的实验性实盘执行器。仓库提供软件和技术文档，不包含托管交易、资产托管、账户
+   管理或个性化建议。本免责声明不限制、也不修改你依据 Apache License 2.0 所享有的权利。
 2. **不构成投资建议。** 本仓库中的任何内容——包括代码、配置、示例、文档、Issue、讨论，以及
-   软件产生的任何输出（回测、报告、信号、面板数据）——均不构成投资、金融、交易、法律、税务
-   或其他任何专业建议，也不构成买入、卖出或持有任何加密货币、衍生品、证券或其他资产的要约、
-   邀约或推荐。发布本软件不建立投资顾问、经纪或交易商关系。
+   软件产生的任何输出（回测、报告、信号、面板数据）——均无意提供个性化投资、金融、交易、法律、
+   税务或其他专业建议，也无意构成买入、卖出或持有资产的要约、邀约或推荐。单纯发布源码不表示
+   提供投资顾问、经纪或交易商关系。上述定位不决定实际行为（包括相关建议、推广或服务）的法律性质。
 3. **高风险提示。** 加密货币及其衍生品（包括永续合约和杠杆产品）波动剧烈、投机性极强。
    你可能损失部分乃至**全部**本金，杠杆仓位可能被迅速强制平仓。依产品与账户规则，损失可能超过初始保证金，
    并可能产生额外付款义务。本风险提示不构成参与交易的邀请。
 4. **不作任何收益承诺。** 随附的示例策略仅用于演示接口用法，其盈利能力未经验证。历史表现、
    回测与模拟盘结果不代表也不保证未来或实盘结果。
 5. **软件风险。** 本软件可能存在缺陷或出现非预期行为，且依赖第三方交易所、API 与数据源，
-   这些服务可能故障、变更或不可用。本软件按"原样"提供，不附带任何形式的担保（见
-   [LICENSE](LICENSE)）。审查、测试与运行本软件、保管 API 密钥，以及本软件代你下达的每一笔
-   订单，均由你本人自行负责。
-6. **使用者责任与合规。** 你须自行判断在你所在司法辖区使用本软件及任何交易所、数据源是否
+   这些服务可能故障、变更或不可用。本软件按"原样"提供，受 [LICENSE](LICENSE) 与适用法律的
+   条款及例外约束。操作者须审查、测试和管理运行、保管 API 密钥并独立核对订单与敞口；这不排除
+   作者或贡献者自身依法承担的强制性义务或责任。
+6. **使用者责任与合规。** 你须判断在相关司法辖区使用本软件及任何交易所、数据源是否
    合法，并自行遵守所有适用的法律法规、税务义务及第三方服务条款。加密货币交易或衍生品交易
    在部分国家和地区受到限制或被禁止；在违法的情况下请勿使用本软件。
 7. **无关联声明。** 本项目与 Binance 或文中提及的任何交易所、数据提供商或公司均无关联，
@@ -110,7 +115,9 @@ differ, the English version prevails.
     工具输出；仓库指令文件不构成沙箱或权限系统。不要向 Issue、模型或维护者提交凭据、私人账本
     或原始日志。模型输出不能作为发布、部署、修改账户权限或下单的授权。应审阅第三方数据处理条款。
 12. **运行边界。** 资金配置和亏损阈值不构成保证，也不隔离账户资产。订单可能遗漏、重复、部分成交
-    或结果不明；进程停机不等于撤销交易所订单或已经平仓。详见 [SECURITY](SECURITY.md) 和
+    或结果不明；进程停机不等于撤销交易所订单或已经平仓。密钥检查和 `stage: live` 不核验法律资格
+    或适当性，项目不提供账户监护或应急响应。相关付费支持、信号、托管执行或导流应按实际行为
+    单独审查。详见 [SECURITY](SECURITY.md) 和
     [COMPLIANCE](docs/COMPLIANCE.md)。
 
 使用前请阅读本免责声明。若中英文版本存在差异或歧义，以英文版本为准。

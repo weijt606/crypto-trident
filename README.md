@@ -24,8 +24,8 @@ Repository and package name: `crypto-trident`.
 
 Trident is a Python project for testing crypto trading ideas. You can try a rule on past
 prices (a backtest), then watch it run on current market data with virtual money (paper
-trading). It also includes live execution, which places real orders and requires separate
-setup and review.
+trading). It also includes experimental live executors for operator-controlled use. They
+place real orders and require separate eligibility, technical and operational review.
 
 The example uses two moving averages of price, over 50 and 200 bars, to demonstrate how a
 strategy works. Its profitability has not been established. You can replace it with your
@@ -49,7 +49,8 @@ See the [exchange integration design](docs/EXCHANGE_INTEGRATION.md),
 > repository is financial advice. See the full [DISCLAIMER](DISCLAIMER.md).
 >
 > - **No warranty.** The software is provided "as is", without warranty of any kind; see
->   [LICENSE](LICENSE). You are solely responsible for any orders placed with it.
+>   [LICENSE](LICENSE). Operators must review and manage orders placed with it; mandatory
+>   legal rights and liabilities are unaffected.
 > - **Backtest and paper results do not predict live results.** Fills, latency, fees,
 >   funding and market impact differ in live trading.
 > - **Not affiliated with or endorsed by Binance or any exchange.** Exchange names are used
@@ -226,11 +227,25 @@ to a new file, set `strategy:` and `params:`, and run it with `--bot <file name>
 
 ## Live execution scope
 
-The repository includes a Binance spot and USDT-M perpetual implementation. Live use needs
-separate review of account eligibility, permissions, capital and operating conditions;
-backtest or paper results do not approve it automatically. Detailed setup and limitations
-are in [Live execution notes](docs/LIVE_TRADING.md). For first use, start with the research
-and paper commands above.
+The experimental live executors implement Binance spot and USDT-M perpetual order paths
+on Linux/macOS. Technical compatibility does not establish that a particular exchange
+entity, account or product is available or permitted in your location. The software does
+not verify legal eligibility, KYC status or suitability; `stage: live` records an operator's
+configuration choice, not regulatory approval.
+
+- **Self-hosted operation.** This repository supplies software and technical documentation.
+  It does not include a hosted trading service, custody, managed accounts or personalized
+  investment advice. Keep credentials with the operator; do not submit them for support.
+- **Execution can remain unresolved.** A timeout or failed lookup does not establish that
+  an order failed. Stopping a bot does not cancel exchange orders or close positions.
+  Capital caps and local risk thresholds do not isolate account assets or guarantee a loss ceiling.
+- **Separate review before live use.** Backtests, paper results, tests and key-permission
+  checks do not approve live operation. Review the [live execution notes](docs/LIVE_TRADING.md)
+  and [compliance scope](docs/COMPLIANCE.md), including the boundaries of any related service
+  or promotion. Source availability and Apache licensing do not confer a financial license.
+
+Start with the research and paper commands above. See the live guide for command side
+effects, known limitations and human-reviewed recovery.
 
 ## Sentiment configuration
 

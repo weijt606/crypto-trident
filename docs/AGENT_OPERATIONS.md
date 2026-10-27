@@ -125,6 +125,20 @@ outputs; a heartbeat alone does not prove that data, authentication or trading i
 | 健康检查 | `scripts/health.py` | 读取状态和日志，发现问题时保存告警，并可能发 Telegram；不是纯无副作用读取 |
 | 情绪研究 | `scripts/fetch_sentiment.py`、`scripts/validate_sentiment.py` | 前者联网取数并写文件，后者读本地数据并写报告 |
 | Linux 服务部署 | `scripts/install_services_systemd.sh` | 同步依赖、写 user units、启用/重启服务和定时器；会改变主机运行状态 |
+| 交易密钥检查 | `scripts/verify_trade_key.py` | 加载交易密钥、鉴权读取并打印现货余额和估值；不发单，不核验法律资格或完整合约账户状态 |
+| 实盘执行 | `scripts/run_live.py`、`scripts/run_live_perp.py` | 加载交易密钥、读取账户、可真实下单、写状态/账本和告警；永续启动还可能修改保证金模式与杠杆 |
+| 熔断恢复 | `scripts/revive.py` | 重置本地熔断与回撤/日亏损基准，写事件；不查询交易所、不平仓、不验证审阅说明属实 |
+| 永续退役 | `scripts/retire_live_perp.py` | 鉴权读取并写本地启动记录；加 `--yes` 可真实平仓并写停机标记，结果仍须核对 |
+
+The live and recovery entries are reference information, not authorization for an agent to
+run them. The operator must review eligibility, command effects and account exposure under
+[LIVE_TRADING](LIVE_TRADING.md). Unknown order outcomes must be reconciled before a new
+submission or recovery decision; the current code does not enforce a complete incident
+procedure. Do not infer trading authority from a request to edit docs, test, or set up paper.
+
+实盘与恢复条目用于说明命令，不授权 Agent 执行。操作者须按[实盘说明](LIVE_TRADING.md)审查
+资格、副作用与账户敞口；新提交或恢复决定前须核对结果不明的订单，当前代码不强制执行完整事故
+流程。不能从文档编辑、测试或模拟盘部署请求推定真实交易授权。
 
 Run the scripts through `uv run --frozen python`, for example:
 

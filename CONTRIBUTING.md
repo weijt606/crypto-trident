@@ -18,6 +18,20 @@ Thanks for your interest in Trident!
    Keep page code in `monitor/static/app.js` (the CSP forbids inline scripts and inline
    event handlers) and register every served file in `STATIC_FILES` in `monitor/dashboard.py`.
 
+## Live execution documentation and support
+
+Describe implemented order paths and limitations without implying regulatory approval,
+guaranteed execution, bounded losses or investment suitability. Keep the English and Chinese
+README and live-operation notes aligned. New live behavior must document order ambiguity,
+account/position assumptions, recovery and command side effects; fake-exchange tests do not
+certify live funds safety. Do not request user keys, raw account exports or private logs in
+issues or support. Use synthetic or minimized, redacted reproductions.
+
+Code review and bug reports are technical collaboration, not account supervision or a promise
+to respond to trading incidents. Related services, personalized signals, exchange referrals
+or performance marketing require separate review under [COMPLIANCE](docs/COMPLIANCE.md).
+These contribution conventions do not add restrictions to the Apache license.
+
 ## License of contributions
 
 Trident is licensed under the Apache License, Version 2.0. Unless you explicitly state
