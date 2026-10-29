@@ -228,7 +228,7 @@ async function renderEquity() {
   const d = await api('/api/equity', {bot: state.bot});
   if (d.error || !d.series) return;
   const bn = d.benchmark || cache.benchmark;
-  $('#chartMeta').textContent = `${state.bot} vs ${bn} buy & hold · rebased to 100`;
+  $('#chartMeta').textContent = `${state.bot} vs ${bn} buy & hold · rebased to 100 · capital moves excluded`;
   if (!d.series.length) { mkChart('equityChart').clear(); $('#chartSub').textContent='No equity data yet'; return; }
   const last = d.series[d.series.length-1];
   $('#chartSub').innerHTML = `Now <b>${fmtN(last.equity,1)}</b> · ${esc(bn)} <b>${fmtN(last.bench,1)}</b>`;

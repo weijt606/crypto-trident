@@ -308,7 +308,8 @@ Each data source has its own terms. You are responsible for complying with them.
   The auth-failure alert is sent at most once per hour per bot. `scripts/health.py` reports a
   `<bot>.softcut` marker as retired or soft-cut, not as a stale heartbeat.
 - Optional `config/capital_events.yaml` records deposits and withdrawals. The dashboard
-  adjusts its return and daily-PnL calculations for those supplied entries; it does not
+  adjusts the equity curve, returns, PnL and daily-PnL figures for those supplied entries
+  (an entry dated on a day without a snapshot is applied at the next one); it does not
   detect unrecorded moves automatically. The CLI metrics report does not apply this
   adjustment. The file is gitignored and blocked by the pre-commit hook because it holds
   personal financial data. Format:
