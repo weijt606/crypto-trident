@@ -249,15 +249,12 @@ def _adjusted(eq: pd.DataFrame, name: str, ledger: str) -> pd.DataFrame:
 def _twr(eq: pd.DataFrame, name: str, ledger: str) -> tuple[float | None, float | None]:
     """Time-weighted return and max drawdown with capital events removed.
 
-    Daily closes are chained; each day's change has that day's deposit or
-    withdrawal subtracted, so funding a bot is never reported as a return.
+    Use the same snapshot-level index as the equity curve, including returns
+    before the first daily close and intraday drawdowns.
     """
     if eq is None or len(eq) < 2:
         return None, None
-    close = _daily_close(eq)
-    if len(close) < 2:
-        return None, None
-    ser = _adjusted(close, name, ledger)["idx"]
+    ser = _adjusted(eq, name, ledger)["idx"]
     dd = float((1 - ser / ser.cummax()).max())
     return float(ser.iloc[-1] - 1), dd
 
@@ -402,6 +399,7 @@ def api_live_summary(_q) -> dict:
             n_with_data += 1
             last = eq.iloc[-1]
             cur = float(last["equity"])
+            latest_day = _day(last["ts"])
             total += cur
             pv = abs(float(last["position_qty"] * last["last_price"]))
             notional += pv
@@ -413,12 +411,12 @@ def api_live_summary(_q) -> dict:
             prev = close[close["d"] < today]
             if len(prev):
                 base = float(prev["equity"].iloc[-1])
-                day_chg += cur - base - _moved(cap, n, prev["d"].iloc[-1], today)
+                day_chg += cur - base - _moved(cap, n, prev["d"].iloc[-1], latest_day)
                 day_base += base
             older = close[close["d"] <= week_ago]
             if len(older):
                 base = float(older["equity"].iloc[-1])
-                week_chg += cur - base - _moved(cap, n, older["d"].iloc[-1], today)
+                week_chg += cur - base - _moved(cap, n, older["d"].iloc[-1], latest_day)
                 week_base += base
     finally:
         tlog.close()
@@ -732,7 +730,13 @@ def _pnl_series(eq: pd.DataFrame, name: str, ledger: str) -> dict:
     adj = _adjusted(eq, name, ledger)
     start = float(adj["equity"].iloc[0])
     adj["pnl"] = adj["equity"] - start - adj["flow"]
-    samp = adj.iloc[:: max(1, len(adj) // 120)] if len(adj) > 120 else adj
+    # Bound the payload while retaining both endpoints, especially the latest
+    # value displayed alongside the sparkline.
+    step = max(1, math.ceil((len(adj) - 1) / 119))
+    positions = list(range(0, len(adj), step))
+    if positions[-1] != len(adj) - 1:
+        positions.append(len(adj) - 1)
+    samp = adj.iloc[positions]
     pts = [{"ts": int(t), "pnl": round(float(p), 4)} for t, p in zip(samp["ts"], samp["pnl"])]
     return {"start": round(start, 2), "last": round(float(adj["pnl"].iloc[-1]), 4),
             "last_pct": round((float(adj["idx"].iloc[-1]) - 1) * 100, 2), "points": pts}
