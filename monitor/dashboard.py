@@ -201,32 +201,60 @@ def _capital_events() -> dict[tuple[str, str, str], float]:
     return out
 
 
-def _daily_close(eq: pd.DataFrame) -> pd.Series:
+def _day(ts) -> str:
+    return pd.Timestamp(int(ts), unit="ms", tz="UTC").strftime("%Y-%m-%d")
+
+
+def _daily_close(eq: pd.DataFrame) -> pd.DataFrame:
+    """Last equity row of each UTC day, with the day in column "d"."""
     e = eq.sort_values("ts").copy()
     e["d"] = pd.to_datetime(e["ts"], unit="ms", utc=True).dt.strftime("%Y-%m-%d")
-    return e.groupby("d")["equity"].last()
+    return e.groupby("d", as_index=False).last()
+
+
+def _flows(ts, name: str, ledger: str) -> list[float]:
+    """Capital moved in at each equity point, aligned with ``ts``.
+
+    Every return figure on the dashboard goes through this one mapping. An
+    event is booked on the first point dated on or after it, so a day without
+    a snapshot cannot drop a deposit. Events up to the first point are already
+    part of the starting equity and count as 0.
+    """
+    pending = sorted((d, v) for (d, bot, lg), v in _capital_events().items()
+                     if bot == name and lg == ledger)
+    out = []
+    for i, t in enumerate(ts):
+        d, delta = _day(t), 0.0
+        while pending and pending[0][0] <= d:
+            delta += pending.pop(0)[1]
+        out.append(delta if i else 0.0)
+    return out
+
+
+def _adjusted(eq: pd.DataFrame, name: str, ledger: str) -> pd.DataFrame:
+    """Equity points plus a capital-adjusted return index ``idx`` (first
+    point = 1) and cumulative net capital moved in, ``flow``."""
+    e = eq.sort_values("ts")[["ts", "equity"]].reset_index(drop=True)
+    flows = _flows(e["ts"], name, ledger)
+    idx, prev = [], None
+    for v, f in zip(e["equity"].astype(float), flows):
+        if prev is None:
+            idx.append(1.0)
+        else:     # this period's deposit is not return; next base includes it
+            idx.append(idx[-1] * (1 + ((v - f) - prev) / prev) if prev > 0 else idx[-1])
+        prev = v
+    return e.assign(idx=idx, flow=pd.Series(flows).cumsum())
 
 
 def _twr(eq: pd.DataFrame, name: str, ledger: str) -> tuple[float | None, float | None]:
     """Time-weighted return and max drawdown with capital events removed.
 
-    Daily closes are chained; each day's change has that day's deposit or
-    withdrawal subtracted, so funding a bot is never reported as a return.
+    Use the same snapshot-level index as the equity curve, including returns
+    before the first daily close and intraday drawdowns.
     """
     if eq is None or len(eq) < 2:
         return None, None
-    close = _daily_close(eq)
-    if len(close) < 2:
-        return None, None
-    cap = _capital_events()
-    curve = [1.0]
-    prev = float(close.iloc[0])
-    for d, v in list(close.items())[1:]:
-        v = float(v)
-        delta = cap.get((d, name, ledger), 0.0)
-        curve.append(curve[-1] * (1 + ((v - delta) - prev) / prev) if prev > 0 else curve[-1])
-        prev = v          # next day's base is the actual equity, deposit included
-    ser = pd.Series(curve)
+    ser = _adjusted(eq, name, ledger)["idx"]
     dd = float((1 - ser / ser.cummax()).max())
     return float(ser.iloc[-1] - 1), dd
 
@@ -297,6 +325,8 @@ def api_overview(_q) -> dict:
                 initial = float(eq["equity"].iloc[0])
                 peak = float(eq["equity"].cummax().iloc[-1])
                 twr, twr_dd = _twr(eq, b["name"], ledger)
+                # PnL is measured against what was put in, not the first snapshot
+                invested = initial + float(_adjusted(eq, b["name"], ledger)["flow"].iloc[-1])
                 eq_now = float(last["equity"])
                 pos_val = float(last["position_qty"] * last["last_price"])
                 b.update(
@@ -304,7 +334,7 @@ def api_overview(_q) -> dict:
                     cash=round(float(last["cash"]), 2),
                     position_qty=float(last["position_qty"]),
                     position_value=round(pos_val, 2),
-                    pnl=round(eq_now - initial, 2),
+                    pnl=round(eq_now - invested, 2),
                     pnl_pct=round(twr * 100, 2) if twr is not None
                     else round((eq_now / initial - 1) * 100, 2) if initial else None,
                     drawdown_pct=round(twr_dd * 100, 2) if twr_dd is not None
@@ -330,6 +360,12 @@ def api_overview(_q) -> dict:
     finally:
         _close(paper, live)
     return {"bots": bots, "universe": _universe(), "benchmark": _benchmark()}
+
+
+def _moved(cap: dict, name: str, after: str, until: str) -> float:
+    """Live capital moved in on days in (after, until]."""
+    return sum(v for (d, bot, lg), v in cap.items()
+               if bot == name and lg == "live" and after < d <= until)
 
 
 def api_live_summary(_q) -> dict:
@@ -363,6 +399,7 @@ def api_live_summary(_q) -> dict:
             n_with_data += 1
             last = eq.iloc[-1]
             cur = float(last["equity"])
+            latest_day = _day(last["ts"])
             total += cur
             pv = abs(float(last["position_qty"] * last["last_price"]))
             notional += pv
@@ -371,17 +408,15 @@ def api_live_summary(_q) -> dict:
             if dd is not None:
                 max_dd = max(max_dd, dd)
             close = _daily_close(eq)
-            prev = close[close.index < today]
+            prev = close[close["d"] < today]
             if len(prev):
-                base = float(prev.iloc[-1])
-                day_chg += cur - base - cap.get((today, n, "live"), 0.0)
+                base = float(prev["equity"].iloc[-1])
+                day_chg += cur - base - _moved(cap, n, prev["d"].iloc[-1], latest_day)
                 day_base += base
-            older = close[close.index <= week_ago]
+            older = close[close["d"] <= week_ago]
             if len(older):
-                base = float(older.iloc[-1])
-                moved = sum(v for (d, bot, lg), v in cap.items()
-                            if bot == n and lg == "live" and week_ago < d <= today)
-                week_chg += cur - base - moved
+                base = float(older["equity"].iloc[-1])
+                week_chg += cur - base - _moved(cap, n, older["d"].iloc[-1], latest_day)
                 week_base += base
     finally:
         tlog.close()
@@ -488,7 +523,6 @@ def api_daily_pnl(q) -> dict:
         else:
             names = [b["name"] for b in _bots()
                      if not scope or (b["stage"] == "live") == (scope == "live")]
-        cap = _capital_events()
         chg: dict[str, float] = {}
         real: dict[str, float] = {}
         equity: dict[str, float] = {}
@@ -499,13 +533,15 @@ def api_daily_pnl(q) -> dict:
             eq = tlog.equity_df(n)
             if len(eq):
                 close = _daily_close(eq)
-                for d, v in close.diff().dropna().items():
-                    delta = cap.get((d, n, ledger), 0.0)
-                    if delta:
-                        capital[d] = capital.get(d, 0.0) + delta
-                    chg[d] = chg.get(d, 0.0) + float(v) - delta
-                for d, v in close.items():
-                    equity[d] = equity.get(d, 0.0) + float(v)
+                flows = _flows(close["ts"], n, ledger)
+                vals = close["equity"].astype(float).tolist()
+                for k, d in enumerate(close["d"]):
+                    equity[d] = equity.get(d, 0.0) + vals[k]
+                    if not k:
+                        continue
+                    if flows[k]:
+                        capital[d] = capital.get(d, 0.0) + flows[k]
+                    chg[d] = chg.get(d, 0.0) + vals[k] - vals[k - 1] - flows[k]
             f = tlog.fills_df(n)
             if len(f):
                 ff = f.copy()
@@ -540,11 +576,17 @@ def api_daily_pnl(q) -> dict:
 
 
 def api_equity(q) -> dict:
-    """Bot equity curve vs benchmark buy-and-hold, both rebased to 100."""
+    """Bot equity curve vs benchmark buy-and-hold, both rebased to 100.
+
+    The bot line is the capital-adjusted return index, so deposits and
+    withdrawals do not show up as performance.
+    """
     name = q.get("bot", [""])[0]
     paper, live = _open_logs()
     try:
-        eq = _log_for(_stage_of(name), paper, live).equity_df(name)
+        tlog = _log_for(_stage_of(name), paper, live)
+        ledger = "live" if (live is not None and tlog is live) else "paper"
+        eq = tlog.equity_df(name)
     finally:
         _close(paper, live)
     if eq.empty:
@@ -559,7 +601,8 @@ def api_equity(q) -> dict:
     merged = merged.dropna(subset=["equity"])
     if merged.empty:
         return {"series": []}
-    eq0 = float(merged["equity"].iloc[0])
+    merged = merged.reset_index(drop=True)
+    idx = _adjusted(merged, name, ledger)["idx"]
     px = merged["close"].dropna()
     px0 = float(px.iloc[0]) if len(px) else None
     return {
@@ -567,11 +610,11 @@ def api_equity(q) -> dict:
         "series": [
             {
                 "ts": int(r.ts),
-                "equity": round(float(r.equity) / eq0 * 100, 3) if eq0 else None,
+                "equity": round(float(i) * 100, 3),
                 "bench": round(float(r.close) / px0 * 100, 3)
                 if px0 and pd.notna(r.close) else None,
             }
-            for r in merged.itertuples(index=False)
+            for r, i in zip(merged.itertuples(index=False), idx)
         ],
     }
 
@@ -675,19 +718,28 @@ def api_events(q) -> dict:
     return {"events": events.to_dict("records")}
 
 
-def _pnl_series(eq: pd.DataFrame) -> dict:
-    """Compress an equity series into a PnL sparkline (<=120 points)."""
+def _pnl_series(eq: pd.DataFrame, name: str, ledger: str) -> dict:
+    """Compress an equity series into a PnL sparkline (<=120 points).
+
+    PnL is equity minus starting equity minus net capital moved in;
+    ``last_pct`` is the time-weighted return. Capital is removed on the full
+    series before downsampling so a skipped point cannot hide a deposit.
+    """
     if eq is None or eq.empty:
         return {"start": None, "last": 0.0, "last_pct": 0.0, "points": []}
-    eq = eq.sort_values("ts")
-    if len(eq) > 120:
-        eq = eq.iloc[:: max(1, len(eq) // 120)]
-    start = float(eq["equity"].iloc[0])
-    pts = [{"ts": int(r.ts), "pnl": round(float(r.equity) - start, 4)}
-           for r in eq.itertuples(index=False)]
-    last = pts[-1]["pnl"]
-    return {"start": round(start, 2), "last": last,
-            "last_pct": round(last / start * 100, 2) if start else 0.0, "points": pts}
+    adj = _adjusted(eq, name, ledger)
+    start = float(adj["equity"].iloc[0])
+    adj["pnl"] = adj["equity"] - start - adj["flow"]
+    # Bound the payload while retaining both endpoints, especially the latest
+    # value displayed alongside the sparkline.
+    step = max(1, math.ceil((len(adj) - 1) / 119))
+    positions = list(range(0, len(adj), step))
+    if positions[-1] != len(adj) - 1:
+        positions.append(len(adj) - 1)
+    samp = adj.iloc[positions]
+    pts = [{"ts": int(t), "pnl": round(float(p), 4)} for t, p in zip(samp["ts"], samp["pnl"])]
+    return {"start": round(start, 2), "last": round(float(adj["pnl"].iloc[-1]), 4),
+            "last_pct": round((float(adj["idx"].iloc[-1]) - 1) * 100, 2), "points": pts}
 
 
 def api_strategy(_q) -> dict:
@@ -708,7 +760,8 @@ def api_strategy(_q) -> dict:
                          "params": _bot_configs().get(b["name"], {}).get("params", {}),
                          "live": tlog.latest_strategy_state(b["name"]),
                          "ledger": "live" if tlog is live else "paper",
-                         "pnl": _pnl_series(tlog.equity_df(b["name"]))})
+                         "pnl": _pnl_series(tlog.equity_df(b["name"]), b["name"],
+                                            "live" if tlog is live else "paper")})
     finally:
         _close(paper, live)
 
