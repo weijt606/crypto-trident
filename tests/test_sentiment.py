@@ -272,7 +272,7 @@ def test_reddit_rss_failure_falls_back_to_json(monkeypatch, reddit_enabled):
 
     def fake(url, retry_wait=15.0):
         if url.endswith(".rss"):
-            raise OSError("HTTP Error 429")
+            raise OSError("temporary connection failure")
         return _json.dumps({"data": {"children": [
             {"data": {"title": "ETH rally continues", "created_utc": 1705314568, "ups": 99, "stickied": False}},
             {"data": {"title": "pinned", "created_utc": 1705314500, "ups": 1, "stickied": True}}]}}).encode()
@@ -285,10 +285,44 @@ def test_reddit_all_methods_fail_returns_empty(monkeypatch, reddit_enabled):
     from sentiment import sources
 
     def boom(url, retry_wait=15.0):
-        raise OSError("HTTP Error 403: Blocked")
+        raise OSError("transport failed")
     monkeypatch.setattr(sources, "_reddit_get", boom)
     df = sources.fetch_reddit()
     assert df.empty and list(df.columns) == ["ts", "value", "weight", "title"]
+
+
+@pytest.mark.parametrize("status", [401, 403, 429, 451])
+def test_reddit_access_denial_never_falls_back(monkeypatch, reddit_enabled, status):
+    from urllib.error import HTTPError
+    calls = []
+
+    def denied(url, **kwargs):
+        calls.append(url)
+        raise HTTPError(url, status, "access denied", {}, None)
+
+    monkeypatch.setattr(sources_mod, "_reddit_get", denied)
+    assert sources_mod.fetch_reddit().empty
+    assert len(calls) == 1
+    assert calls[0].endswith(".rss")
+
+
+def test_reddit_rate_limit_is_not_retried(monkeypatch):
+    from urllib.error import HTTPError
+    import time
+    calls = []
+
+    def limited(req, **kwargs):
+        calls.append(req.full_url)
+        raise HTTPError(req.full_url, 429, "rate limited", {}, None)
+
+    def no_sleep(*args):
+        pytest.fail("a rate-limited request must return control without retrying")
+
+    monkeypatch.setattr(sources_mod.urllib.request, "urlopen", limited)
+    monkeypatch.setattr(time, "sleep", no_sleep)
+    with pytest.raises(HTTPError):
+        sources_mod._reddit_get("https://www.reddit.com/r/example/hot/.rss")
+    assert len(calls) == 1
 
 
 # ---- hostile feeds ----

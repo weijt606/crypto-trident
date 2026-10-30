@@ -28,6 +28,7 @@ def problems_for(path: str, mode: str, content: bytes) -> set[str]:
             or name in {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519"}
             or name.endswith((".local.yaml", "_state.json", ".kill", ".softcut",
                               ".parquet", ".db", ".log", ".jsonl"))
+            or re.search(r"\.(?:log|jsonl)\..+$", name)
             or ".sqlite" in name or path == "config/capital_events.yaml"):
         problems.add("private-file")
     if mode == "120000":

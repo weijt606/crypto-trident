@@ -15,6 +15,8 @@ spec.loader.exec_module(safety)
     ".env", "nested/.env.production", "config/bots/demo.local.yaml",
     "custom/live.sqlite-wal", "custom/session.jsonl", "nested/.claude/session.md",
     "logs/output.txt", "config/capital_events.yaml", "custom/test_state.json",
+    "custom/trident.log.1", "custom/trident.log.2.gz",
+    "custom/alerts.jsonl.1", "custom/alerts.jsonl.1.gz",
 ])
 def test_private_files_rejected_even_without_secret_content(path):
     assert "private-file" in safety.problems_for(path, "100644", b"harmless")

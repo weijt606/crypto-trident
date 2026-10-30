@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import urllib.error
 import urllib.request
 
 import pandas as pd
@@ -144,10 +145,9 @@ def fetch_news(cfg: SentimentConfig | None = None) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("ts").reset_index(drop=True)
 
 
-# Reddit: the anonymous JSON endpoint is frequently blocked, so the public Atom feed
-# (/r/<sub>/hot/.rss) is tried first and JSON is the fallback. The feed is heavily
-# rate-limited (429 on rapid repeats): hourly polling is fine, and a 429 is retried once.
-# RSS carries no upvote counts, so its posts are equally weighted.
+# Reddit: try the public Atom feed first, with JSON fallback for transport or
+# parsing failures only. Access denials and rate limits stop this fetch; switching
+# formats must not bypass those responses. RSS posts are equally weighted.
 _ATOM = {"a": "http://www.w3.org/2005/Atom"}
 _REDDIT_COLS = ["ts", "value", "weight", "title"]
 # RSS does not flag pinned posts; exclude recurring discussion threads by title so
@@ -155,20 +155,10 @@ _REDDIT_COLS = ["ts", "value", "weight", "title"]
 _PINNED = re.compile(r"^(Daily|Weekly|Monthly) .*(Discussion|Thread)", re.I)
 
 
-def _reddit_get(url: str, retry_wait: float = 15.0) -> bytes:
-    import time
-    import urllib.error
-    for attempt in range(2):
-        try:
-            req = urllib.request.Request(url, headers=_UA)
-            with urllib.request.urlopen(req, timeout=20) as resp:
-                return _read_capped(resp)
-        except urllib.error.HTTPError as e:
-            if e.code == 429 and attempt == 0:
-                time.sleep(retry_wait)
-                continue
-            raise
-    raise RuntimeError("unreachable")
+def _reddit_get(url: str) -> bytes:
+    req = urllib.request.Request(url, headers=_UA)
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return _read_capped(resp)
 
 
 def _reddit_rss(subreddit: str) -> list[dict]:
@@ -201,7 +191,7 @@ def _reddit_json(subreddit: str, limit: int) -> list[dict]:
 def fetch_reddit(subreddit: str = "CryptoCurrency", limit: int = 75,
                  cfg: SentimentConfig | None = None) -> pd.DataFrame:
     """Reddit hot-post titles -> lexicon score. Tries RSS first, then JSON; returns an
-    empty frame (with a warning) if both fail.
+    empty frame (with a warning) if both fail or access is denied/rate-limited.
     Columns: ts, value, weight (RSS: 1.0; JSON: log(1+upvotes)), title.
     Opt-in: returns an empty frame unless "reddit" is in sentiment.sources."""
     if not _enabled("reddit", cfg):
@@ -220,6 +210,13 @@ def fetch_reddit(subreddit: str = "CryptoCurrency", limit: int = 75,
     for name, fn in (("RSS", lambda: _reddit_rss(subreddit)), ("JSON", lambda: _reddit_json(subreddit, limit))):
         try:
             rows = fn()
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403, 429, 451):
+                log.warning("Reddit fetch stopped after HTTP %s; no retry or format fallback. "
+                            "Review access approval and rate limits before another run.", e.code)
+                return pd.DataFrame(columns=_REDDIT_COLS)
+            errors.append(f"{name}: HTTP {e.code}")
+            continue
         except Exception as e:  # noqa: BLE001  fail-soft, try the next method
             errors.append(f"{name}: {e}")
             continue
