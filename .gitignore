@@ -14,6 +14,8 @@
 .agent-runs/
 *.jsonl
 *.log
+*.jsonl.*
+*.log.*
 
 # Local data: market data, ledgers, state, logs
 storage/

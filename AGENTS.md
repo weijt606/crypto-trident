@@ -49,8 +49,8 @@ Read README.md, docs/ARCHITECTURE.md and docs/AGENT_OPERATIONS.md before operati
 
 ## Current release decision and private context
 
-- Public release is on hold. Do not publish, push, change visibility, deploy services or
-  upload artifacts without instructions covering that action. Earlier pushes do not authorize
+- The source repository is public. Do not publish releases, push, change visibility, deploy
+  services or upload artifacts without instructions covering that action. Earlier pushes do not authorize
   publication of subsequent work. Preserve the existing license.
 - Keep agent transcripts and task output in ignored `.agent-runs/` or outside this checkout;
   no private reference source, prompts, machine paths, credentials or account data in docs.

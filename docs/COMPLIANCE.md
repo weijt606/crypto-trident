@@ -1,6 +1,7 @@
 # 合规边界与数据流 / Compliance and data flows
 
-全球发布边界核对日期：2026-10-28。本文件记录发布与运行需要审查的事项，不构成对特定个人、地区或商业模式
+全球发布边界核对日期：2026-10-28；2026-10-30 复核下列 NFA CTA、MiCA 第 59 条、FCA、
+中国大陆通知、Reddit 与 Alternative.me 官方来源。本文件记录发布与运行需要审查的事项，不构成对特定个人、地区或商业模式
 的法律许可。与 [DISCLAIMER](../DISCLAIMER.md) 一起阅读；不增加 Apache 2.0 许可证之外的使用限制。
 
 ## Publication and service boundaries / 源码发布与服务边界
@@ -90,6 +91,21 @@ explanation are preserved here for regional review, not as a global publication 
 [Notice / 通知](https://www.csrc.gov.cn/csrc/c100028/c7614318/content.shtml),
 [Official explanation / 答记者问](https://www.csrc.gov.cn/csrc/c100028/c7614320/content.shtml)
 
+## Public demonstrations / 公开演示
+
+Distinguish personal agent setups and strategies from the tools actually included here.
+Label synthetic demos, paper runs and live records accurately. Keep the README's synthetic-data
+disclosure with shared demo images; the current PNGs do not carry a synthetic-data watermark.
+For personal live screenshots, redact account identifiers and operational details, identify the
+period and relevant cost, leverage and capital-flow assumptions, and avoid presenting the
+result as evidence of the bundled example's profitability or a promise to users. A disclaimer
+does not by itself resolve promotion restrictions; assess the audience and actual communication.
+
+个人 Agent 环境和策略应与本仓库实际包含的工具区分。合成演示、模拟盘和实盘记录须准确标识。
+分享演示图时应附上 README 的合成数据说明，现有 PNG 本身没有合成数据水印。
+个人实盘截图应遮挡账户标识和运行信息，说明期间及相关费用、杠杆和资金变动口径；
+不能用个人结果证明随附示例盈利或向使用者承诺收益。免责声明本身不解决推广限制，须结合受众和实际内容审查。
+
 ## 数据和隐私
 
 | 数据流 | 发送或保存在何处 | 操作者注意事项 |
@@ -126,8 +142,8 @@ Python 依赖从锁文件安装，其各自许可仍适用；分发 Docker、安
 
 ## Release status and effect of statements / 发布状态与声明效力
 
-Live functionality is retained. Publication remains on hold pending review; retaining the
-code and improving these documents do not approve publication, deployment or live trading.
+Live functionality is retained and the source repository is public. Public availability and
+document updates do not establish legal eligibility or approve deployment or live trading.
 Tests and scans are engineering evidence, not legal or real-money safety certification.
 The [release record](RELEASE_READINESS.md) distinguishes historical and current evidence.
 
@@ -139,7 +155,7 @@ project as software. Seek qualified jurisdiction-specific advice before offering
 financial service; this document cannot resolve that service's status.
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
-保留实盘功能，公开发布仍待审查；保留代码和完善文档不批准发布、部署或实盘交易。测试与扫描
+保留实盘功能，源码仓库已公开；公开可访问和文档更新不证明法律资格，也不批准部署或实盘交易。测试与扫描
 是工程证据，不是法律或真实资金安全认证；[发布记录](RELEASE_READINESS.md)区分历史与本轮证据。
 
 Apache 2.0 第 7–9 条在其条款和适用法律下规定担保、责任及额外义务。说明操作者责任不转移

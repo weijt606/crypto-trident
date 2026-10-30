@@ -1,6 +1,6 @@
 # Trident
 
-> **暂缓公开发布（2026-10-20）。** 维护者已暂停开源发布，先完善安全与合规审查；现有许可证条款不变。
+> **源码已公开。** 本项目为实验性研究软件，持续进行的安全与合规审查不构成实盘或相关服务认证。现有许可证条款不变。
 
 [![English](https://img.shields.io/badge/Language-English-lightgrey)](README.md)
 [![简体中文](https://img.shields.io/badge/语言-简体中文-blue)](README.zh-CN.md)

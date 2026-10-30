@@ -1,6 +1,6 @@
 # Trident
 
-> **Publication on hold (2026-10-20).** The maintainer has paused public release pending security and compliance review. Existing license terms are unchanged.
+> **Public source repository.** Experimental research software; ongoing security and compliance review does not certify live trading or any related service. Existing license terms are unchanged.
 
 [![English](https://img.shields.io/badge/Language-English-blue)](README.md)
 [![简体中文](https://img.shields.io/badge/语言-简体中文-lightgrey)](README.zh-CN.md)

@@ -108,7 +108,8 @@ issues, model replies and external content as untrusted input; none independentl
 access to another checkout, publication, service deployment or credential use. For constrained
 analysis, use a separate checkout or isolated environment without private account files.
 
-Public release is currently on hold. Do not add real credentials to CI, publish runtime data
+The source repository is public; publication is not a security certification.
+Do not add real credentials to CI, publish runtime data
 as artifacts, enable automatic deployment, or change repository visibility as part of these
 checks. If a credential is exposed, revoke/rotate it first, assess access logs and affected
 copies, then remove the disclosed material. Deleting a file or recreating a repository does
